@@ -1,0 +1,4 @@
+<expr> ::= <literal> | <compound>
+<compound> ::= <unary> ( <expr> ) | ( <expr> ) <binary> ( <expr> )
+<unary> ::= "!" | "F" | "X" | "G"
+<binary> ::= "&" | "|"

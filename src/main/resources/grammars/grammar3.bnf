@@ -1,0 +1,3 @@
+<expr> ::=  <sequence> | G(F( <goal> )) | G(!( <goal> )) | G(!( <goal> ) "|" ( <sequence> )) | ( <expr> ) & ( <expr> )
+<sequence> ::= F ( ( <goal> ) & ( X ( F ( <sequence> ) ) ) ) | <goal>
+<goal> ::= <literal> | !( <literal> ) | ( <literal> ) & ( <literal> ) | ( <literal> ) "|" ( <literal> )
