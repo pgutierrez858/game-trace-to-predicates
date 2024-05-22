@@ -8,6 +8,7 @@ import org.moeaframework.core.PRNG;
 import predcompiler.compilation.AbstractPredicateSearch;
 import predcompiler.compilation.evaluation.IPredicateEvaluator;
 import predcompiler.compilation.evaluation.TieredPredicateEvaluator;
+import predcompiler.compilation.evaluation.statevariables.LessThanMapping;
 
 public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 
@@ -112,7 +113,15 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 
 			GrammarEvolutionGrammarSearch search = new GrammarEvolutionGrammarSearch(bnfFilePath, systemFolderPath,
 					initialPopulationSize, maxGenerations);
-			HashSet<String> bestPredicates = search.findBestPredicates(new TieredPredicateEvaluator());
+			float[] resourceChecks = new float[] { 0, 1, 2, 3, 4, 5 };
+			String[] resourceNames = new String[] { "wood", "iron", "axe" };
+			for (String name : resourceNames) {
+				for (float check : resourceChecks) {
+					search.addMapping(new LessThanMapping(name, check, 0, 5));
+				}
+			}
+			search.initialize();
+			HashSet<String> bestPredicates = search.runSearch(new TieredPredicateEvaluator());
 			for (var pred : bestPredicates) {
 				System.out.println(pred);
 			}

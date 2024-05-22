@@ -2,6 +2,7 @@ package predcompiler.compilation;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -15,7 +16,10 @@ import org.moeaframework.util.io.Resources.ResourceOption;
 
 import predcompiler.compilation.evaluation.IPredicateEvaluator;
 import predcompiler.compilation.evaluation.RealValuation;
+import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping;
+import predcompiler.compilation.io.GameStateTraceFileReader;
 import predcompiler.compilation.io.GameTraceFileReader;
+import predcompiler.compilation.io.StateTraceToRobustnessMapper;
 
 /**
  * Base class for any search for a predicate that models a set of sample and
@@ -38,17 +42,67 @@ public abstract class AbstractPredicateSearch {
 	protected List<RealValuation[]> counterExampleTraces;
 
 	/**
+	 * List of mapping functions that will be used to transform the contents of the
+	 * file to robustness entries.
+	 */
+	protected List<AbstractStateToRobustnessMapping> mappings;
+
+	/**
+	 * System path for the folder containing the traces to be modeled.
+	 */
+	protected String tracesPath;
+
+	/**
+	 * System path for the .bnf file representing the grammar to use as a search
+	 * space.
+	 */
+	protected String grammarPath;
+
+	/**
 	 * Complete grammar to be used for the search process, including literals from
 	 * trace files.
 	 */
 	protected ContextFreeGrammar grammar;
 
+	/**
+	 * Whether this search has been properly initialized.
+	 */
+	protected boolean initialized;
+
 	protected AbstractPredicateSearch(String grammarPath, String tracesPath) throws IOException {
-		this.readTraces(tracesPath);
-		this.readGrammar(grammarPath);
+		this.mappings = new ArrayList<>();
+		this.tracesPath = tracesPath;
+		this.grammarPath = grammarPath;
+		this.initialized = false;
 	} // AbstractPredicateSearch
 
-	protected void readTraces(String tracesPath) throws IOException {
+	public void addMapping(AbstractStateToRobustnessMapping mapping) {
+		this.mappings.add(mapping);
+	} // addMapping
+
+	/**
+	 * Initialize the Predicate Search with the information from the system paths
+	 * where samples and grammars are located. If no mappings have been provided, it
+	 * is assumed that the target files are purely robustness based and the default
+	 * GameTraceReader is used to parse them. If at least one mapping is provided,
+	 * then the files will be processed by a GameStateTraceFileReader, and the
+	 * result will ONLY include the output of the mapping functions applied to the
+	 * game states.
+	 * 
+	 * @throws IOException if there is an error while accessing any of the files.
+	 */
+	protected void initialize() throws IOException {
+		if (mappings.size() == 0) {
+			this.readRobustnessTraces();
+		} else {
+			this.readMappedTraces();
+		}
+
+		this.readGrammar();
+		this.initialized = true;
+	} // initialize
+
+	protected void readRobustnessTraces() throws IOException {
 		// file reader to process the game traces to model from csv files.
 		GameTraceFileReader traceReader = new GameTraceFileReader(tracesPath);
 		// attempt to process the file traces. throws if there is an error while reading
@@ -59,7 +113,37 @@ public abstract class AbstractPredicateSearch {
 		atomicPredicates = traceReader.getAtomicPredicates();
 		exampleTraces = traceReader.getExampleTraces();
 		counterExampleTraces = traceReader.getCounterExampleTraces();
-	} // readTraces
+	} // readRobustnessTraces
+
+	protected void readMappedTraces() throws IOException {
+		// file reader to process the game STATE traces to model from csv files.
+		GameStateTraceFileReader stateTraceReader = new GameStateTraceFileReader(tracesPath);
+		// attempt to process the file traces. This will cache traces as lists of hash
+		// maps.
+		stateTraceReader.readTraces();
+
+		// mapper object to bulk-transform states into RealValuations based on provided
+		// mappings
+		var mapper = new StateTraceToRobustnessMapper(mappings);
+		exampleTraces = new ArrayList<>();
+		for (var exampleTrace : stateTraceReader.getExampleTraces()) {
+			// create a new valuation by applying all mapping functions to the game state.
+			exampleTraces.add(mapper.mapStateTraceToRobustness(exampleTrace));
+		}
+
+		counterExampleTraces = new ArrayList<>();
+		for (var counterExampleTrace : stateTraceReader.getCounterExampleTraces()) {
+			// create a new valuation by applying all mapping functions to the game state.
+			counterExampleTraces.add(mapper.mapStateTraceToRobustness(counterExampleTrace));
+		}
+
+		// now, in this case, atomic predicates will be the string representations of
+		// the mappings that we decide to use
+		atomicPredicates = new HashSet<>();
+		for (var mapping : mappings) {
+			atomicPredicates.add(mapping.getPredicateRepresentation());
+		}
+	} // readMappedTraces
 
 	/**
 	 * Attempt to produce a grammar object from the specified system path. Call this
@@ -67,7 +151,7 @@ public abstract class AbstractPredicateSearch {
 	 * the corresponding <literal> rule containing the symbols used as headers in
 	 * the trace files.
 	 */
-	protected void readGrammar(String grammarPath) throws IOException {
+	protected void readGrammar() throws IOException {
 		// get a reader for the file containing the grammar to search on
 		Reader grammarReader = Resources.asReader(this.getClass(), grammarPath, ResourceOption.REQUIRED);
 
@@ -93,10 +177,18 @@ public abstract class AbstractPredicateSearch {
 		grammar.add(terminalRule);
 	} // readGrammar
 
+	public HashSet<String> runSearch(IPredicateEvaluator evaluator) {
+		if (!initialized) {
+			System.out.println("Attempting to run search before calling its initialize() method.");
+			return null;
+		}
+		return findBestPredicates(evaluator);
+	} // runSearch
+
 	/**
 	 * Use the implementing class' search algorithm to look for the best predicates
 	 * relative to the provided predicate fitness evaluator.
 	 */
-	public abstract HashSet<String> findBestPredicates(IPredicateEvaluator evaluator);
+	protected abstract HashSet<String> findBestPredicates(IPredicateEvaluator evaluator);
 
 } // AbstractPredicateSearch

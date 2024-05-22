@@ -1,4 +1,6 @@
-package predcompiler.compilation.evaluation;
+package predcompiler.compilation.evaluation.statevariables;
+
+import java.util.HashMap;
 
 /**
  * Atomic evaluation over system state f: R^n -> [-1, 1], which provides a
@@ -7,13 +9,13 @@ package predcompiler.compilation.evaluation;
  * exploration: (RobustnessOverState, parameters) -> robustness function over
  * state.
  */
-public abstract class RobustnessOverState {
+public abstract class AbstractStateToRobustnessMapping {
 
 	/**
 	 * Produces a floating value in the [-1, 1] interval representing the current
 	 * robustness of this predicate over the game state.
 	 */
-	public abstract float evaluate(float[] stateVariables, String[] variableNames);
+	public abstract float mapRobustness(HashMap<String, Float> state);
 
 	/**
 	 * Represents this function over state as a predicate-safe String, i.e. a string
