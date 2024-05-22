@@ -22,14 +22,42 @@ public class BruteForceGrammarSearch extends AbstractPredicateSearch {
 	 */
 	private int maxDepth;
 
-	public BruteForceGrammarSearch(String grammarPath, String tracesPath, int maxDepth) throws IOException {
-		super(grammarPath, tracesPath);
+	private List<String> terminals;
+
+	private int processedTerminals;
+
+	public BruteForceGrammarSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator, int maxDepth)
+			throws IOException {
+		super(grammarPath, tracesPath, evaluator);
 		this.maxDepth = maxDepth;
 	} // BruteForceGrammarSearch
 
-	public HashSet<String> findBestPredicates(IPredicateEvaluator evaluator) {
-		HashSet<String> bestPredicates = new HashSet<>();
-		double bestFitness = Double.MIN_VALUE;
+	public void stepSearch() {
+		if (processedTerminals >= terminals.size())
+			return;
+
+		String opt = terminals.get(processedTerminals);
+		float fitness = evaluator.evaluatePredicate(opt, exampleTraces, counterExampleTraces);
+		if (fitness > bestFitness) {
+			bestFitness = fitness;
+			bestSolutions = new HashSet<>();
+			bestSolutions.add(opt);
+		} else if (fitness == bestFitness) {
+			bestSolutions.add(opt);
+		}
+
+		processedTerminals++;
+		if (processedTerminals >= terminals.size())
+			terminated = true;
+	} // stepSearch
+
+	public void initialize() throws IOException {
+		super.initialize();
+		buildGrammarTree();
+		processedTerminals = 0;
+	} // initialize
+
+	private void buildGrammarTree() {
 		Stack<GrammarTree> productionStack = new Stack<>();
 
 		// start with the root rule in the grammar and go down from there
@@ -79,18 +107,8 @@ public class BruteForceGrammarSearch extends AbstractPredicateSearch {
 			}
 		}
 
-		for (String opt : rootTree.getTerminals()) {
-			double fitness = evaluator.evaluatePredicate(opt, exampleTraces, counterExampleTraces);
-			if (fitness > bestFitness) {
-				bestFitness = fitness;
-				bestPredicates = new HashSet<>();
-				bestPredicates.add(opt);
-			} else if (fitness == bestFitness) {
-				bestPredicates.add(opt);
-			}
-		}
-		return bestPredicates;
-	} // findBestPredicates
+		terminals = rootTree.getTerminals();
+	} // buildGrammarTree
 
 	public static void main(String[] args) {
 
@@ -130,7 +148,8 @@ public class BruteForceGrammarSearch extends AbstractPredicateSearch {
 				return;
 			}
 
-			BruteForceGrammarSearch search = new BruteForceGrammarSearch(bnfFilePath, systemFolderPath, maxDepth);
+			BruteForceGrammarSearch search = new BruteForceGrammarSearch(bnfFilePath, systemFolderPath,
+					new TieredPredicateEvaluator(), maxDepth);
 			float[] resourceChecks = new float[] { 1, 2, 3, 4, 5 };
 			String[] resourceNames = new String[] { "wood", "iron", "axe" };
 			for (String name : resourceNames) {
@@ -139,9 +158,10 @@ public class BruteForceGrammarSearch extends AbstractPredicateSearch {
 				}
 			}
 			search.initialize();
-			HashSet<String> bestPredicates = search.runSearch(new TieredPredicateEvaluator());
-			for (var pred : bestPredicates) {
-				System.out.println(pred);
+
+			while (!search.isTerminated()) {
+				search.step();
+				search.printStepResults();
 			}
 		} catch (Exception e) {
 			System.err.println("Error: An unexpected error occurred while parsing arguments.");

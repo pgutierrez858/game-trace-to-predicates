@@ -70,7 +70,7 @@ public class TieredPredicateEvaluator extends AbstractAutomatonBasedPredicateEva
 		else if (totalBadProgress > 0f)
 			fitness = totalGoodProgress + (1 - totalBadProgress);
 		else
-			fitness = totalGoodProgress + (1 - totalBadProgress) + totalGoodReward;
+			fitness = totalGoodProgress + (1 - totalBadProgress) + 100 + totalGoodReward;
 
 		return fitness;
 	} // evaluatePredicate

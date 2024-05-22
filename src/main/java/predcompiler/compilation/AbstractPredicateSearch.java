@@ -69,11 +69,39 @@ public abstract class AbstractPredicateSearch {
 	 */
 	protected boolean initialized;
 
-	protected AbstractPredicateSearch(String grammarPath, String tracesPath) throws IOException {
+	/**
+	 * Set including the predicates with the highest fitness according to our chosen
+	 * evaluator.
+	 */
+	protected HashSet<String> bestSolutions;
+
+	/**
+	 * Fitness value of all the individuals included in bestSolutions.
+	 */
+	protected float bestFitness;
+
+	/**
+	 * The evaluation function to use to compute fitness values for predicates.
+	 */
+	protected IPredicateEvaluator evaluator;
+
+	/**
+	 * Whether search has terminated.
+	 */
+	protected boolean terminated;
+
+	/**
+	 * How many search steps have been performed so far.
+	 */
+	protected int steps;
+
+	protected AbstractPredicateSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator)
+			throws IOException {
 		this.mappings = new ArrayList<>();
 		this.tracesPath = tracesPath;
 		this.grammarPath = grammarPath;
 		this.initialized = false;
+		this.evaluator = evaluator;
 	} // AbstractPredicateSearch
 
 	public void addMapping(AbstractStateToRobustnessMapping mapping) {
@@ -99,7 +127,11 @@ public abstract class AbstractPredicateSearch {
 		}
 
 		this.readGrammar();
+		this.bestFitness = Float.NEGATIVE_INFINITY;
+		this.bestSolutions = new HashSet<>();
 		this.initialized = true;
+		this.terminated = false;
+		this.steps = 0;
 	} // initialize
 
 	protected void readRobustnessTraces() throws IOException {
@@ -177,18 +209,43 @@ public abstract class AbstractPredicateSearch {
 		grammar.add(terminalRule);
 	} // readGrammar
 
-	public HashSet<String> runSearch(IPredicateEvaluator evaluator) {
+	public void step() {
 		if (!initialized) {
 			System.out.println("Attempting to run search before calling its initialize() method.");
-			return null;
+			return;
 		}
-		return findBestPredicates(evaluator);
-	} // runSearch
+		stepSearch();
+		steps++;
+	} // step
+
+	public HashSet<String> getBestSolutions() {
+		return this.bestSolutions;
+	} // getBestSolutions
+
+	public float getBestFitness() {
+		return this.bestFitness;
+	} // getBestFitness
 
 	/**
-	 * Use the implementing class' search algorithm to look for the best predicates
-	 * relative to the provided predicate fitness evaluator.
+	 * Whether a final solution has been found.
 	 */
-	protected abstract HashSet<String> findBestPredicates(IPredicateEvaluator evaluator);
+	public boolean isTerminated() {
+		return this.terminated;
+	} // isTerminated
 
+	public void printStepResults() {
+		System.out.println("-------------------------------");
+		System.out.println("Step " + steps);
+		System.out.println("-------------------------------");
+
+		System.out.println("Best Fitness Value: " + bestFitness);
+
+		for (var pred : bestSolutions) {
+			System.out.println("    " + pred);
+		}
+		System.out.println("-------------------------------");
+		System.out.println();
+	} // printStepResults
+
+	protected abstract void stepSearch();
 } // AbstractPredicateSearch

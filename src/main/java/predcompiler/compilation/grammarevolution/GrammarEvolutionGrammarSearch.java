@@ -1,7 +1,6 @@
 package predcompiler.compilation.grammarevolution;
 
 import java.io.IOException;
-import java.util.HashSet;
 import org.moeaframework.algorithm.single.GeneticAlgorithm;
 import org.moeaframework.core.PRNG;
 
@@ -22,45 +21,59 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 	 */
 	private int maxGenerations;
 
-	public GrammarEvolutionGrammarSearch(String grammarPath, String tracesPath, int initialPopulationSize,
-			int maxGenerations) throws IOException {
-		super(grammarPath, tracesPath);
+	/**
+	 * Index of the current evolution generation
+	 */
+	private int generation;
+
+	/**
+	 * Reference to our problem solver algorithm.
+	 */
+	private GeneticAlgorithm algorithm;
+
+	/**
+	 * Reference to the problem that we are trying to solve.
+	 */
+	private GrammarRegression problem;
+
+	public GrammarEvolutionGrammarSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator,
+			int initialPopulationSize, int maxGenerations) throws IOException {
+		super(grammarPath, tracesPath, evaluator);
 		this.initialPopulationSize = initialPopulationSize;
 		this.maxGenerations = maxGenerations;
 	} // GrammarEvolutionGrammarSearch
 
-	public HashSet<String> findBestPredicates(IPredicateEvaluator evaluator) {
-		HashSet<String> result = new HashSet<>();
+	public void initialize() throws IOException {
+		super.initialize();
+
 		PRNG.setRandom(SynchronizedMersenneTwister.getInstance());
 
-		try {
-			// setup and construct the GP solver
-			var problem = new GrammarRegression(exampleTraces, counterExampleTraces, grammar,
-					new TieredPredicateEvaluator());
-			GeneticAlgorithm algorithm = new GeneticAlgorithm(problem);
-			algorithm.setInitialPopulationSize(initialPopulationSize);
-			int generation = 0;
+		// setup and construct the GP solver
+		problem = new GrammarRegression(exampleTraces, counterExampleTraces, grammar, new TieredPredicateEvaluator());
+		algorithm = new GeneticAlgorithm(problem);
+		algorithm.setInitialPopulationSize(initialPopulationSize);
+		generation = 0;
+	} // initialize
 
-			try {
-				// run the GP solver
-				while ((generation < maxGenerations)) {
-					algorithm.step();
-					generation++;
-				}
-			} finally {
-				if (algorithm != null) {
-					algorithm.terminate();
-				}
+	public void stepSearch() {
+		if (generation >= maxGenerations)
+			return;
 
-				result.add(problem.getPredicate(algorithm.getResult().get(0)));
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		algorithm.step();
+
+		for (var solution : algorithm.getResult()) {
+			bestSolutions.add(problem.getPredicate(solution));
 		}
+		// record the fitness of any of the members from the solution set
+		// (note that there will always be at least one)
+		bestFitness = (float) algorithm.getResult().get(0).getObjective(0);
 
-		return result;
-	} // findBestPredicates
+		generation++;
+
+		if (generation >= maxGenerations) {
+			algorithm.terminate();
+		}
+	} // step
 
 	public static void main(String[] args) {
 
@@ -112,8 +125,8 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 			}
 
 			GrammarEvolutionGrammarSearch search = new GrammarEvolutionGrammarSearch(bnfFilePath, systemFolderPath,
-					initialPopulationSize, maxGenerations);
-			float[] resourceChecks = new float[] { 0, 1, 2, 3, 4, 5 };
+					new TieredPredicateEvaluator(), initialPopulationSize, maxGenerations);
+			float[] resourceChecks = new float[] { 1, 2, 3, 4, 5 };
 			String[] resourceNames = new String[] { "wood", "iron", "axe" };
 			for (String name : resourceNames) {
 				for (float check : resourceChecks) {
@@ -121,9 +134,10 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 				}
 			}
 			search.initialize();
-			HashSet<String> bestPredicates = search.runSearch(new TieredPredicateEvaluator());
-			for (var pred : bestPredicates) {
-				System.out.println(pred);
+
+			while (!search.isTerminated()) {
+				search.step();
+				search.printStepResults();
 			}
 		} catch (Exception e) {
 			System.err.println("Error: An unexpected error occurred while parsing arguments.");
