@@ -1,0 +1,95 @@
+{
+	"class": "predcompiler.compilation.grammarevolution.GrammarEvolutionGrammarSearch",
+	"args": [
+		"/grammars/grammar2.bnf",
+		"src/main/resources/samples/resources",
+		{
+			"class": "predcompiler.compilation.evaluation.TieredPredicateEvaluator"
+		},
+		[
+		{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"wood",
+				1,
+				0,
+				5
+			]
+		},
+		{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"wood",
+				2,
+				0,
+				5
+			]
+		},
+		{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"wood",
+				3,
+				0,
+				5
+			]
+		},
+				{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"iron",
+				1,
+				0,
+				5
+			]
+		},
+		{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"iron",
+				2,
+				0,
+				5
+			]
+		},
+		{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"iron",
+				3,
+				0,
+				5
+			]
+		},
+				{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"axe",
+				1,
+				0,
+				5
+			]
+		},
+		{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"axe",
+				2,
+				0,
+				5
+			]
+		},
+		{
+			"class": "predcompiler.compilation.evaluation.statevariables.LessThanMapping",
+			"args": [
+				"axe",
+				3,
+				0,
+				5
+			]
+		}
+		],
+		100,
+		50
+	]
+}

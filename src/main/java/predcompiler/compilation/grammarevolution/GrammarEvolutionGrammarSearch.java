@@ -1,12 +1,16 @@
 package predcompiler.compilation.grammarevolution;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.moeaframework.algorithm.single.GeneticAlgorithm;
 import org.moeaframework.core.PRNG;
 
 import predcompiler.compilation.AbstractPredicateSearch;
 import predcompiler.compilation.evaluation.IPredicateEvaluator;
 import predcompiler.compilation.evaluation.TieredPredicateEvaluator;
+import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping;
 import predcompiler.compilation.evaluation.statevariables.LessThanMapping;
 
 public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
@@ -37,8 +41,9 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 	private GrammarRegression problem;
 
 	public GrammarEvolutionGrammarSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator,
-			int initialPopulationSize, int maxGenerations) throws IOException {
-		super(grammarPath, tracesPath, evaluator);
+			AbstractStateToRobustnessMapping[] mappings, int initialPopulationSize, int maxGenerations)
+			throws IOException {
+		super(grammarPath, tracesPath, evaluator, mappings);
 		this.initialPopulationSize = initialPopulationSize;
 		this.maxGenerations = maxGenerations;
 	} // GrammarEvolutionGrammarSearch
@@ -124,15 +129,19 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 				return;
 			}
 
-			GrammarEvolutionGrammarSearch search = new GrammarEvolutionGrammarSearch(bnfFilePath, systemFolderPath,
-					new TieredPredicateEvaluator(), initialPopulationSize, maxGenerations);
+			// sample mappings setting for testing
+			List<AbstractStateToRobustnessMapping> mappings = new ArrayList<>();
 			float[] resourceChecks = new float[] { 1, 2, 3, 4, 5 };
 			String[] resourceNames = new String[] { "wood", "iron", "axe" };
 			for (String name : resourceNames) {
 				for (float check : resourceChecks) {
-					search.addMapping(new LessThanMapping(name, check, 0, 5));
+					mappings.add(new LessThanMapping(name, check, 0, 5));
 				}
 			}
+			GrammarEvolutionGrammarSearch search = new GrammarEvolutionGrammarSearch(bnfFilePath, systemFolderPath,
+					new TieredPredicateEvaluator(), (AbstractStateToRobustnessMapping[]) mappings.toArray(),
+					initialPopulationSize, maxGenerations);
+
 			search.initialize();
 
 			while (!search.isTerminated()) {
@@ -148,7 +157,8 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 	} // main
 
 	private static void printUsage() {
-		System.out.println("Usage: java Main <bnfFilePath> <systemFolderPath> <maxDepth>");
+		System.out.println(
+				"Usage: java GrammarEvolutionGrammarSearch <bnfFilePath> <systemFolderPath> <initialPopulationSize> <maxGenerations>");
 		System.out.println("  <bnfFilePath>           : Absolute path to the .bnf file.");
 		System.out.println("  <systemFolderPath>      : Absolute path to the system folder containing traces.");
 		System.out.println("  <initialPopulationSize> : Number of individuals to be included in the population.");

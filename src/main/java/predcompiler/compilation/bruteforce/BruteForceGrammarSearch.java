@@ -12,6 +12,7 @@ import org.moeaframework.util.grammar.Symbol;
 import predcompiler.compilation.AbstractPredicateSearch;
 import predcompiler.compilation.evaluation.IPredicateEvaluator;
 import predcompiler.compilation.evaluation.TieredPredicateEvaluator;
+import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping;
 import predcompiler.compilation.evaluation.statevariables.LessThanMapping;
 
 public class BruteForceGrammarSearch extends AbstractPredicateSearch {
@@ -26,9 +27,9 @@ public class BruteForceGrammarSearch extends AbstractPredicateSearch {
 
 	private int processedTerminals;
 
-	public BruteForceGrammarSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator, int maxDepth)
-			throws IOException {
-		super(grammarPath, tracesPath, evaluator);
+	public BruteForceGrammarSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator,
+			AbstractStateToRobustnessMapping[] mappings, int maxDepth) throws IOException {
+		super(grammarPath, tracesPath, evaluator, mappings);
 		this.maxDepth = maxDepth;
 	} // BruteForceGrammarSearch
 
@@ -148,15 +149,18 @@ public class BruteForceGrammarSearch extends AbstractPredicateSearch {
 				return;
 			}
 
-			BruteForceGrammarSearch search = new BruteForceGrammarSearch(bnfFilePath, systemFolderPath,
-					new TieredPredicateEvaluator(), maxDepth);
+			// sample mappings setting for testing
+			List<AbstractStateToRobustnessMapping> mappings = new ArrayList<>();
 			float[] resourceChecks = new float[] { 1, 2, 3, 4, 5 };
 			String[] resourceNames = new String[] { "wood", "iron", "axe" };
 			for (String name : resourceNames) {
 				for (float check : resourceChecks) {
-					search.addMapping(new LessThanMapping(name, check, 0, 5));
+					mappings.add(new LessThanMapping(name, check, 0, 5));
 				}
 			}
+			BruteForceGrammarSearch search = new BruteForceGrammarSearch(bnfFilePath, systemFolderPath,
+					new TieredPredicateEvaluator(), (AbstractStateToRobustnessMapping[]) mappings.toArray(), maxDepth);
+
 			search.initialize();
 
 			while (!search.isTerminated()) {
@@ -172,7 +176,7 @@ public class BruteForceGrammarSearch extends AbstractPredicateSearch {
 	} // main
 
 	private static void printUsage() {
-		System.out.println("Usage: java Main <bnfFilePath> <systemFolderPath> <maxDepth>");
+		System.out.println("Usage: java BruteForceGrammarSearch <bnfFilePath> <systemFolderPath> <maxDepth>");
 		System.out.println("  <bnfFilePath>        : Absolute path to the .bnf file.");
 		System.out.println("  <systemFolderPath>   : Absolute path to the system folder containing traces.");
 		System.out.println("  <maxDepth>           : Maximum depth parameter of the search algorithm.");

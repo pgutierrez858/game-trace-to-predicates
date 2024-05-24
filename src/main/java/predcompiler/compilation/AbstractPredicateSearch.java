@@ -42,10 +42,10 @@ public abstract class AbstractPredicateSearch {
 	protected List<RealValuation[]> counterExampleTraces;
 
 	/**
-	 * List of mapping functions that will be used to transform the contents of the
+	 * Array of mapping functions that will be used to transform the contents of the
 	 * file to robustness entries.
 	 */
-	protected List<AbstractStateToRobustnessMapping> mappings;
+	protected AbstractStateToRobustnessMapping[] mappings;
 
 	/**
 	 * System path for the folder containing the traces to be modeled.
@@ -95,18 +95,14 @@ public abstract class AbstractPredicateSearch {
 	 */
 	protected int steps;
 
-	protected AbstractPredicateSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator)
+	protected AbstractPredicateSearch(String grammarPath, String tracesPath, IPredicateEvaluator evaluator, AbstractStateToRobustnessMapping[] mappings)
 			throws IOException {
-		this.mappings = new ArrayList<>();
+		this.mappings = mappings;
 		this.tracesPath = tracesPath;
 		this.grammarPath = grammarPath;
 		this.initialized = false;
 		this.evaluator = evaluator;
 	} // AbstractPredicateSearch
-
-	public void addMapping(AbstractStateToRobustnessMapping mapping) {
-		this.mappings.add(mapping);
-	} // addMapping
 
 	/**
 	 * Initialize the Predicate Search with the information from the system paths
@@ -119,8 +115,8 @@ public abstract class AbstractPredicateSearch {
 	 * 
 	 * @throws IOException if there is an error while accessing any of the files.
 	 */
-	protected void initialize() throws IOException {
-		if (mappings.size() == 0) {
+	public void initialize() throws IOException {
+		if (mappings.length == 0) {
 			this.readRobustnessTraces();
 		} else {
 			this.readMappedTraces();
