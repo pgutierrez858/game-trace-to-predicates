@@ -1,4 +1,4 @@
-<spec> ::= <singlespec> | <singlespec> ; <spec>
+<spec> ::= <singlespec> | <singlespec> & <spec>
 <singlespec> ::= <sequence> | G(F( <goal> )) | G( <goal> ) | G(!( <goal> ) "|" ( <sequence> ))
 <sequence> ::= F ( ( <goal> ) & ( X ( <sequence> ) ) ) | <goal> | X ( <sequence> )
 <goal> ::= <literal> | !( <ngoal> ) | ( <literal> ) & ( <goal> ) | ( <literal> ) "|" ( <goal> )

@@ -1,5 +1,5 @@
 {
-  "class": "predcompiler.compilation.grammarevolution.GrammarEvolutionGrammarSearch",
+  "class": "predcompiler.compilation.mcts.BasicMCTSSearch",
   "args": [
     "/grammars/grammar2.bnf",
     "src/main/resources/samples/resources",
@@ -89,7 +89,6 @@
         ]
       }
     ],
-    100,
-    50
+    6
   ]
 }
