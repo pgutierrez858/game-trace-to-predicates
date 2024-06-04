@@ -35,7 +35,7 @@ class BasicTreeNode(
 
     init {
         this.root = parent?.root ?: this
-        setState(state)
+        updateState(state)
         depth = if (parent != null) {
             parent.depth + 1
         } else {
@@ -126,7 +126,7 @@ class BasicTreeNode(
         return cur
     } // treePolicy
 
-    private fun setState(newState: GrammarProductionState) {
+    private fun updateState(newState: GrammarProductionState) {
         if (newState.isNotTerminal()) for (action in newState.possibleActions()) {
             children[action] = null // mark a new node to be expanded
         }

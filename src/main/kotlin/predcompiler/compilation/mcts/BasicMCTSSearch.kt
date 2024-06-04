@@ -8,11 +8,11 @@ import java.util.*
 import kotlin.math.sqrt
 
 /**
- * Basic MCTS-based searcher using [TAG's BasicMCTSPlayer implementation](https://github.com/GAIGResearch/TabletopGames/blob/master/src/main/java/players/basicMCTS/BasicMCTSPlayer.java") as a reference.
+ * Basic MCTS-based searcher using [TAG's BasicMCTSPlayer implementation](https://github.com/GAIGResearch/TabletopGames/blob/master/src/main/java/players/basicMCTS/BasicMCTSPlayer.java) as a reference.
  */
 class BasicMCTSSearch(
-    grammarPath: String?, tracesPath: String?, evaluator: IPredicateEvaluator?,
-    mappings: Array<AbstractStateToRobustnessMapping?>?
+    grammarPath: String, tracesPath: String, evaluator: IPredicateEvaluator,
+    mappings: List<AbstractStateToRobustnessMapping>
 ) : AbstractPredicateSearch(grammarPath, tracesPath, evaluator, mappings) {
 
     val rnd: Random = Random()

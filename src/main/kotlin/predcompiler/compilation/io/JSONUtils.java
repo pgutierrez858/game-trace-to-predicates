@@ -167,8 +167,7 @@ public class JSONUtils {
 	 *
 	 * @param filename - the filename
 	 * @param <T>      - the Class type that is to be instantiated
-	 * @return
-	 */
+     */
 	public static <T> T loadClassFromFile(String filename) {
 		try {
 			FileReader reader = new FileReader(filename);

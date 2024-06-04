@@ -9,7 +9,7 @@ import rabinizer.bdd.BDDForVariables;
 
 public class StateTraceToRobustnessMapper {
 
-	private AbstractStateToRobustnessMapping[] mappingFunctions;
+	private final AbstractStateToRobustnessMapping[] mappingFunctions;
 
 	public StateTraceToRobustnessMapper(AbstractStateToRobustnessMapping[] mappingFunctions) {
 		this.mappingFunctions = mappingFunctions;
