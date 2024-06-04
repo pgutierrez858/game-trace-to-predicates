@@ -26,7 +26,7 @@ public class ExperimentLauncher {
 			AbstractPredicateSearch search = JSONUtils.loadClassFromFile(configFile);
 			search.initialize();
 
-			while (!search.isTerminated()) {
+			while (search.isStillRunning()) {
 				search.step();
 				search.printStepResults();
 			}

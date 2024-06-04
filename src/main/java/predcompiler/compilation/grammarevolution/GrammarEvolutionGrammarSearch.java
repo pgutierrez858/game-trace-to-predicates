@@ -144,7 +144,7 @@ public class GrammarEvolutionGrammarSearch extends AbstractPredicateSearch {
 
 			search.initialize();
 
-			while (!search.isTerminated()) {
+			while (search.isStillRunning()) {
 				search.step();
 				search.printStepResults();
 			}

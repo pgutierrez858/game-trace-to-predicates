@@ -207,19 +207,11 @@ public abstract class AbstractPredicateSearch {
         steps++;
     } // step
 
-    public HashSet<String> getBestSolutions() {
-        return this.bestSolutions;
-    } // getBestSolutions
-
-    public float getBestFitness() {
-        return this.bestFitness;
-    } // getBestFitness
-
     /**
      * Whether a final solution has been found.
      */
-    public boolean isTerminated() {
-        return this.terminated;
+    public boolean isStillRunning() {
+        return !this.terminated;
     } // isTerminated
 
     public void printStepResults() {

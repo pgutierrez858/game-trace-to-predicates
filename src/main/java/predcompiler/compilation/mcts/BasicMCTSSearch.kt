@@ -12,7 +12,7 @@ import kotlin.math.sqrt
  */
 class BasicMCTSSearch(
     grammarPath: String?, tracesPath: String?, evaluator: IPredicateEvaluator?,
-    mappings: Array<AbstractStateToRobustnessMapping?>?, seed: Long
+    mappings: Array<AbstractStateToRobustnessMapping?>?
 ) : AbstractPredicateSearch(grammarPath, tracesPath, evaluator, mappings) {
 
     val rnd: Random = Random()
