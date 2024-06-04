@@ -15,7 +15,7 @@ interface IPredicateEvaluator {
      */
     fun evaluatePredicate(
         predicate: String?,
-        examples: List<Array<RealValuation?>?>?,
-        counterExamples: List<Array<RealValuation?>?>?
+        examples: List<Array<RealValuation>>,
+        counterExamples: List<Array<RealValuation>>
     ): Float
 }
