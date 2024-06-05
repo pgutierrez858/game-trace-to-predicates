@@ -1,10 +1,10 @@
-package predcompiler.compilation.evaluation;
+package predcompiler.compilation.evaluation
 
-import java.io.OutputStream;
-import java.io.PrintStream;
-import rabinizer.automata.DTRA;
-import rabinizer.exec.Main;
-import rabinizer.exec.Main.AutomatonType;
+import rabinizer.automata.DTRA
+import rabinizer.exec.Main
+import rabinizer.exec.Main.AutomatonType
+import java.io.OutputStream
+import java.io.PrintStream
 
 /**
  * Convenience base class for evaluators which need to make use of a Rabin
@@ -12,26 +12,25 @@ import rabinizer.exec.Main.AutomatonType;
  * this conveniently in silent mode and get access to it from the corresponding
  * evaluation function.
  */
-public abstract class AbstractAutomatonBasedPredicateEvaluator implements IPredicateEvaluator {
+abstract class AbstractAutomatonBasedPredicateEvaluator : IPredicateEvaluator {
+    /**
+     * Computes a deterministic Rabin automaton for the specified predicate, in
+     * silent mode.
+     */
+    protected fun computeAutomaton(predicate: String?): DTRA {
+        val originalStream = System.out
 
-	/**
-	 * Computes a deterministic Rabin automaton for the specified predicate, in
-	 * silent mode.
-	 */
-	protected DTRA computeAutomaton(String predicate) {
-		PrintStream originalStream = System.out;
+        val dummyStream = PrintStream(object : OutputStream() {
+            override fun write(b: Int) {
+                // NO-OP
+            }
+        })
 
-		PrintStream dummyStream = new PrintStream(new OutputStream() {
-			public void write(int b) {
-				// NO-OP
-			}
-		});
+        System.setOut(dummyStream)
+        val automaton = Main.computeAutomaton(predicate, AutomatonType.TR, true, false, true) as DTRA
+        System.setOut(originalStream)
 
-		System.setOut(dummyStream);
-		DTRA automaton = (DTRA) Main.computeAutomaton(predicate, AutomatonType.TR, true, false, true);
-		System.setOut(originalStream);
-
-		return automaton;
-	} // computeAutomaton
-
+        return automaton
+    } // computeAutomaton
 } // AbstractAutomatonBasedPredicateEvaluator
+
