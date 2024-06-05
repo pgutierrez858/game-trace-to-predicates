@@ -1,7 +1,7 @@
 package predcompiler.compilation.experiments
 
 import predcompiler.compilation.AbstractPredicateSearch
-import predcompiler.compilation.io.JSONUtils
+import predcompiler.compilation.io.loadClassFromFile
 
 fun main(args: Array<String>) {
     // Check if help command is requested or if the number of arguments is incorrect
@@ -20,7 +20,7 @@ fun main(args: Array<String>) {
             return
         }
 
-        val search = JSONUtils.loadClassFromFile<AbstractPredicateSearch>(configFile)
+        val search = loadClassFromFile<AbstractPredicateSearch>(configFile)
 
         while (search.isStillRunning) {
             search.step()

@@ -1,14 +1,13 @@
 package predcompiler.compilation
 
 import org.moeaframework.util.grammar.*
-import org.moeaframework.util.io.Resources
-import org.moeaframework.util.io.Resources.ResourceOption
 import predcompiler.compilation.evaluation.IPredicateEvaluator
 import predcompiler.compilation.evaluation.RealValuation
 import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping
 import predcompiler.compilation.io.GameStateTraceFileReader
 import predcompiler.compilation.io.GameTraceFileReader
 import predcompiler.compilation.io.StateTraceToRobustnessMapper
+import java.io.File
 import java.io.IOException
 
 /**
@@ -87,36 +86,6 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
 
     // endregion
 
-    /**
-     * Initialize the Predicate Search with the information from the system paths where samples and grammars are
-     * located. If no mappings have been provided, it is assumed that the target files are purely robustness based and
-     * the default GameTraceReader is used to parse them. If at least one mapping is provided, then the files will be
-     * processed by a GameStateTraceFileReader, and the result will ONLY include the output of the mapping functions
-     * applied to the game states.
-     */
-    init {
-
-        grammar = this.readGrammar()
-
-        val readTracesData: TracesReadResult = if (mappings.isEmpty()) {
-            this.readRobustnessTraces()
-        } else {
-            this.readMappedTraces()
-        }
-
-        atomicPredicates = readTracesData.atomicPredicates
-        exampleTraces = readTracesData.exampleTraces
-        counterExampleTraces = readTracesData.counterExampleTraces
-
-        populateLiteralProductions()
-
-        // init run information fields for current search
-        this.bestFitness = Float.NEGATIVE_INFINITY
-        this.bestSolutions = HashSet()
-        this.terminated = false
-        this.steps = 0
-    } // initialize
-
     @Throws(IOException::class)
     protected fun readRobustnessTraces(): TracesReadResult {
         // file reader to process the game traces to model from csv files.
@@ -175,7 +144,7 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
     @Throws(IOException::class)
     protected fun readGrammar(): ContextFreeGrammar {
         // get a reader for the file containing the grammar to search on
-        val grammarReader = Resources.asReader(this.javaClass, grammarPath, ResourceOption.REQUIRED)
+        val grammarReader = File(grammarPath).reader()
 
         // attempt to parse an actual grammar for the file.
         // note that we are expecting the grammar to include ONLY the
@@ -206,6 +175,36 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
         }
         grammar.add(terminalRule)
     } // populateLiteralProductions
+
+    /**
+     * Initialize the Predicate Search with the information from the system paths where samples and grammars are
+     * located. If no mappings have been provided, it is assumed that the target files are purely robustness based and
+     * the default GameTraceReader is used to parse them. If at least one mapping is provided, then the files will be
+     * processed by a GameStateTraceFileReader, and the result will ONLY include the output of the mapping functions
+     * applied to the game states.
+     */
+    init {
+
+        grammar = this.readGrammar()
+
+        val readTracesData: TracesReadResult = if (mappings.isEmpty()) {
+            this.readRobustnessTraces()
+        } else {
+            this.readMappedTraces()
+        }
+
+        atomicPredicates = readTracesData.atomicPredicates
+        exampleTraces = readTracesData.exampleTraces
+        counterExampleTraces = readTracesData.counterExampleTraces
+
+        populateLiteralProductions()
+
+        // init run information fields for current search
+        this.bestFitness = Float.NEGATIVE_INFINITY
+        this.bestSolutions = HashSet()
+        this.terminated = false
+        this.steps = 0
+    } // init
 
     fun step() {
         stepSearch()
