@@ -1,8 +1,8 @@
 package predcompiler.compilation.mcts
 
 import predcompiler.compilation.AbstractPredicateSearch
-import predcompiler.compilation.evaluation.IPredicateEvaluator
-import predcompiler.compilation.evaluation.TieredPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.IPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.TieredPredicateEvaluator
 import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping
 import java.util.*
 import kotlin.math.sqrt
@@ -23,7 +23,7 @@ class BasicMCTSSearch(
         val heuristic = fun(state: GrammarProductionState): Double {
             if (state.isNotTerminal()) return 0.0
             val stringPredicate: String = state.buildResultString()
-            return TieredPredicateEvaluator().evaluatePredicate(
+            return evaluator.evaluatePredicate(
                 stringPredicate, exampleTraces,
                 counterExampleTraces
             ).toDouble()
@@ -31,10 +31,10 @@ class BasicMCTSSearch(
         parameters = BasicMCTSParams(
             K = sqrt(2.0),
             rolloutLength = 100,
-            maxTreeDepth = 15,
+            maxTreeDepth = 200,
             epsilon = 1e-6,
             budgetType = MCTSSearchConstants.BUDGET_ITERATIONS,
-            budget = 100,
+            budget = 700,
             heuristic = heuristic
         )
         state = GrammarProductionState(grammar, listOf(grammar[0].symbol))
@@ -55,6 +55,7 @@ class BasicMCTSSearch(
         while (state.isNotTerminal()) {
             val action = getAction(state)
             val newState = state.applyProduction(action)
+            println(newState.buildResultString())
             if (newState == state) break
             state = newState
         }

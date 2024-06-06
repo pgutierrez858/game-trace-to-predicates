@@ -1,4 +1,7 @@
-package predcompiler.compilation.evaluation
+package predcompiler.compilation.evaluation.evaluators
+
+import predcompiler.compilation.evaluation.RealValuation
+import predcompiler.compilation.evaluation.RewardGenerator
 
 /**
  * Evaluates a predicate giving the highest priority to example trace satisfaction, followed by rejection of counter

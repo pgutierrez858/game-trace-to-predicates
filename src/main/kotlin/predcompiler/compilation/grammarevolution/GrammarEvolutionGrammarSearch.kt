@@ -3,8 +3,8 @@ package predcompiler.compilation.grammarevolution
 import org.moeaframework.algorithm.single.GeneticAlgorithm
 import org.moeaframework.core.PRNG
 import predcompiler.compilation.AbstractPredicateSearch
-import predcompiler.compilation.evaluation.IPredicateEvaluator
-import predcompiler.compilation.evaluation.TieredPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.IPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.TieredPredicateEvaluator
 import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping
 import predcompiler.compilation.evaluation.statevariables.LessThanMapping
 import java.io.File

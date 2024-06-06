@@ -1,8 +1,8 @@
 package predcompiler.compilation.bruteforce
 
 import predcompiler.compilation.AbstractPredicateSearch
-import predcompiler.compilation.evaluation.IPredicateEvaluator
-import predcompiler.compilation.evaluation.TieredPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.IPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.TieredPredicateEvaluator
 import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping
 import predcompiler.compilation.evaluation.statevariables.LessThanMapping
 import java.io.File

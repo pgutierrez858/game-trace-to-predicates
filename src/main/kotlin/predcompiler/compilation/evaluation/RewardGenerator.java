@@ -85,8 +85,6 @@ public class RewardGenerator {
 	 */
 	public static EvaluationReport evaluateTrace(DTRA automaton, RealValuation[] trace) {
 
-		EvaluationReport report = new EvaluationReport();
-
 		// calculate how far away each state is from an acceptance state (any).
 		var distancesToAcceptance = computeShortestDistancesToAcceptance(automaton);
 		/*
@@ -248,10 +246,7 @@ public class RewardGenerator {
 			++t;
 		}
 
-		report.endProgress = endProgress;
-		report.endReward = endReward;
-		report.remainingSteps = trace.length - t;
-		return report;
+		return new EvaluationReport(trace.length - t, endProgress, endReward);
 	} // computeProgress
 
 } // RewardGenerator

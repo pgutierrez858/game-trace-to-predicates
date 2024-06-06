@@ -6,7 +6,7 @@ import org.moeaframework.util.grammar.Symbol
  * Produce a list of all possible grammar production actions that can be taken from the calling state.
  */
 fun GrammarProductionState.possibleActions(): List<GrammarProductionAction> {
-    return buildList() {
+    return buildList {
         for ((symbolIndex, symbol) in resultSequence.withIndex()) {
             // a terminal symbol can't be expanded anymore.
             if (symbol.isTerminal) continue
@@ -40,7 +40,7 @@ fun GrammarProductionState.applyProduction(action: GrammarProductionAction): Gra
     // select the production specified by the action object
     val takenProduction = chosenRule[action.chosenProductionIndex]
 
-    val productionResultSegment: List<Symbol> = buildList() {
+    val productionResultSegment: List<Symbol> = buildList {
         // a production specifies the symbols that will replace the selected action symbol in the result sequence.
         for (i in 0 until takenProduction.size()) {
             // collect the next symbol from the production's tokens
@@ -69,5 +69,5 @@ fun GrammarProductionState.isNotTerminal(): Boolean {
  * Produces a String representation of the result by joining the token values of all symbols in the result sequence.
  */
 fun GrammarProductionState.buildResultString(): String {
-    return resultSequence.joinToString { symbol -> symbol.value }
+    return resultSequence.joinToString(" ") { symbol -> symbol.value }
 } // GrammarProductionState.buildResultString

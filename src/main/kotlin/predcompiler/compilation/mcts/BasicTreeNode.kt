@@ -11,7 +11,7 @@ class BasicTreeNode(
     private val search: BasicMCTSSearch,
     // Parent of this node
     private val parent: BasicTreeNode?,
-    var state: GrammarProductionState,
+    val state: GrammarProductionState,
     private val rnd: Random
 ) {
     // Depth of this node
@@ -31,7 +31,6 @@ class BasicTreeNode(
 
     // Number of FM calls and State copies up until this node
     private var fmCallsCount = 0
-    
 
     init {
         this.root = parent?.root ?: this
@@ -169,9 +168,9 @@ class BasicTreeNode(
      * @param gs  - current game state
      * @param act - action to apply
      */
-    private fun advance(gs: GrammarProductionState, act: GrammarProductionAction) {
-        gs.applyProduction(act)
+    private fun advance(gs: GrammarProductionState, act: GrammarProductionAction): GrammarProductionState {
         root.fmCallsCount++
+        return gs.applyProduction(act)
     } // advance
 
     private fun ucb(): GrammarProductionAction {
@@ -224,17 +223,16 @@ class BasicTreeNode(
         var rolloutDepth = 0 // counting from end of tree
 
         // If rollouts are enabled, select actions for the rollout in line with the rollout policy
-        val rolloutState = state.copy()
+        var rolloutState = state.copy()
         if (search.parameters.rolloutLength > 0) {
             while (!finishRollout(rolloutState, rolloutDepth)) {
                 val next: GrammarProductionAction = rolloutState.possibleActions().random(rnd.asKotlinRandom())
-                advance(rolloutState, next)
+                rolloutState = advance(rolloutState, next)
                 rolloutDepth++
             }
         }
         // Evaluate final state and return normalised score
-        val value: Double = search.parameters.heuristic!!.invoke(rolloutState)
-        println(rolloutState.buildResultString())
+        val value: Double = search.parameters.heuristic.invoke(rolloutState)
         if (java.lang.Double.isNaN(value)) throw AssertionError("Illegal heuristic value - should be a number")
         return value
     }

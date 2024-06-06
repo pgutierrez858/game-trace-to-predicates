@@ -1,4 +1,4 @@
-package predcompiler.compilation.evaluation
+package predcompiler.compilation.evaluation.evaluators
 
 import rabinizer.automata.DTRA
 import rabinizer.exec.Main

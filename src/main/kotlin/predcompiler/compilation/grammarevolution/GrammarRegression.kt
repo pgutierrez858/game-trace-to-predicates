@@ -4,7 +4,7 @@ import org.moeaframework.core.Solution
 import org.moeaframework.core.variable.Grammar
 import org.moeaframework.problem.AbstractProblem
 import org.moeaframework.util.grammar.ContextFreeGrammar
-import predcompiler.compilation.evaluation.IPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.IPredicateEvaluator
 import predcompiler.compilation.evaluation.RealValuation
 import kotlin.random.Random
 

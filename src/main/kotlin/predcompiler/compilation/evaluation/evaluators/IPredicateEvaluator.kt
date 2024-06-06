@@ -1,4 +1,6 @@
-package predcompiler.compilation.evaluation
+package predcompiler.compilation.evaluation.evaluators
+
+import predcompiler.compilation.evaluation.RealValuation
 
 /**
  * Interface base for all predicate evaluators. A predicate evaluator can be
@@ -18,4 +20,4 @@ interface IPredicateEvaluator {
         examples: List<Array<RealValuation>>,
         counterExamples: List<Array<RealValuation>>
     ): Float
-}
+} // IPredicateEvaluator
