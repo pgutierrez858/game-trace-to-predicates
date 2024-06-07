@@ -1,8 +1,8 @@
 {
   "class": "predcompiler.compilation.mcts.BasicMCTSSearch",
   "data": {
-    "grammarPath": "src/main/resources/grammars/ifThenGrammar.bnf",
-    "tracesPath": "src/main/resources/samples/ping-pong",
+    "grammarPath": "../main/resources/grammars/ifThenGrammar.bnf",
+    "tracesPath": "../main/resources/samples/ping-pong",
     "evaluator": {
       "class": "predcompiler.compilation.evaluation.evaluators.ParameterizedPredicateEvaluator",
       "data": {

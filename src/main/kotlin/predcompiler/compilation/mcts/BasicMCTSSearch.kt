@@ -22,9 +22,11 @@ class BasicMCTSSearch(
 
     init {
         val heuristic = fun(state: GrammarProductionState): Double {
+            // To ignore intermediate heuristic:
+            if (state.isNotTerminal()) return 0.0
+
             val stringPredicate: String = state.buildResultString(ignoreNonTerminals = true)
-            // To ignore intermediate heuristic: if (state.isNotTerminal()) return 0.0
-            if (stringPredicate.isEmpty() || stringPredicate.contains("()") || stringPredicate.contains(")(")) return 0.0
+            // if (stringPredicate.isEmpty() || stringPredicate.contains("()") || stringPredicate.contains(")(")) return 0.0
             return evaluator.evaluatePredicate(
                 stringPredicate, exampleTraces,
                 counterExampleTraces
@@ -36,7 +38,7 @@ class BasicMCTSSearch(
             maxTreeDepth = 20,
             epsilon = 1e-6,
             budgetType = MCTSSearchConstants.BUDGET_ITERATIONS,
-            budget = 1000,
+            budget = 1500,
             heuristic = heuristic
         )
         state = GrammarProductionState(grammar, listOf(grammar[0].symbol))

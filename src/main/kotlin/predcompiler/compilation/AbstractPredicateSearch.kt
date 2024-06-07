@@ -19,7 +19,7 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
     /**
      * System path for the .bnf file representing the grammar to use as a search space.
      */
-    private val grammarPath: String,
+    grammarPath: String,
     /**
      * System path for the folder containing the traces to be modeled.
      */
@@ -59,7 +59,7 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
     /**
      * Complete grammar to be used for the search process, including literals from trace files.
      */
-    protected val grammar: ContextFreeGrammar
+    protected val grammar: ContextFreeGrammar = readGrammar(grammarPath)
 
     // endregion
 
@@ -136,46 +136,6 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
         return TracesReadResult(atomicPredicates, exampleTraces, counterExampleTraces)
     } // readMappedTraces
 
-    /**
-     * Attempt to produce a grammar object from the specified system path. Call this only after loading the reference
-     * traces to ensure that the grammar includes the corresponding <literal> rule containing the symbols used as
-     * headers in the trace files.
-     */
-    @Throws(IOException::class)
-    protected fun readGrammar(): ContextFreeGrammar {
-        // get a reader for the file containing the grammar to search on
-        val grammarReader = File(grammarPath).reader()
-
-        // attempt to parse an actual grammar for the file.
-        // note that we are expecting the grammar to include ONLY the
-        // basic building blocks and not the atomic predicates, which
-        // will be included later on programmatically based on the contents
-        // of the trace files and their headers.
-        val grammar = Parser.load(grammarReader)
-
-        // close the reader to free resources
-        grammarReader.close()
-
-        return grammar
-    } // readGrammar
-
-    /**
-     * Adds all the symbols from atomic predicates as terminal productions
-     * to the grammar under the production with tag <literal>.
-     */
-    private fun populateLiteralProductions() {
-        // add a rule to the grammar for the atomic predicates
-        // as grammar literals. This is done by looking at the atomic predicates
-        // from the headers of the csv files used as reference.
-        val terminalRule = Rule(Symbol("literal", false))
-        for (l in atomicPredicates) {
-            val terminalProduction = Production()
-            terminalProduction.add(Symbol(l, true))
-            terminalRule.add(terminalProduction)
-        }
-        grammar.add(terminalRule)
-    } // populateLiteralProductions
-
     private fun populateBlockLiteralProductions() {
         // add a rule to the grammar for the atomic predicates
         // as grammar literals. This is done by looking at the atomic predicates
@@ -218,8 +178,6 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
      * applied to the game states.
      */
     init {
-
-        grammar = this.readGrammar()
 
         val readTracesData: TracesReadResult = if (mappings.isEmpty()) {
             this.readRobustnessTraces()
@@ -266,5 +224,29 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
     } // printStepResults
 
     protected abstract fun stepSearch()
+
+    companion object {
+        /**
+         * Attempt to produce a grammar object from the specified system path.
+         * Throws an exception if provided path is invalid or if grammar could not be parsed properly.
+         */
+        @kotlin.jvm.Throws(NullPointerException::class, IOException::class)
+        fun readGrammar(grammarPath: String): ContextFreeGrammar {
+            // get a reader for the file containing the grammar to search on
+            val grammarReader = File(grammarPath).reader()
+
+            // attempt to parse an actual grammar for the file.
+            // note that we are expecting the grammar to include ONLY the
+            // basic building blocks and not the atomic predicates, which
+            // will be included later on programmatically based on the contents
+            // of the trace files and their headers.
+            val grammar = Parser.load(grammarReader)
+
+            // close the reader to free resources
+            grammarReader.close()
+
+            return grammar
+        } // readGrammar
+    }
 } // AbstractPredicateSearch
 

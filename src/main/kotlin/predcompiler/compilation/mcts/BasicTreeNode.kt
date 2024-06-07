@@ -2,6 +2,7 @@ package predcompiler.compilation.mcts
 
 import java.util.*
 import java.util.stream.Collectors
+import kotlin.collections.HashSet
 import kotlin.math.ln
 import kotlin.math.sqrt
 import kotlin.random.asKotlinRandom
@@ -25,6 +26,11 @@ class BasicTreeNode(
 
     // Total value of this node
     private var totValue = 0.0
+
+    /**
+     * Best solution encountered under this node.
+     */
+    private var bestValue = Double.NEGATIVE_INFINITY
 
     // Number of visits
     private var nVisits = 0
@@ -205,7 +211,7 @@ class BasicTreeNode(
         return gs.applyProduction(act)
     } // advance
 
-    fun pruneActionsDifferentFrom(action: GrammarProductionAction){
+    fun pruneActionsDifferentFrom(action: GrammarProductionAction) {
         children.entries.removeIf { it.key !== action }
     } // pruneActionsDifferentFrom
 
@@ -310,17 +316,21 @@ class BasicTreeNode(
         val value: Double = search.parameters.heuristic.invoke(state)
         if (java.lang.Double.isNaN(value)) throw AssertionError("Illegal heuristic value - should be a number")
 
-        // if our state is terminal, we can assume it is fully explored
+        // if our state is terminal, we can assume it is fully explored and we know
+        // the best value from it (itself, single value)
         if (!state.isNotTerminal()) {
             fullyExplored = true
+            bestValue = value
         }
         while (n != null) {
             n.nVisits++
             n.totValue += value
             n = n.parent
-            // propagate fully explored status
-            if (n != null)
+            // propagate fully explored status and best value
+            if (n != null) {
                 n.fullyExplored = n.unexploredActions().isEmpty()
+                n.bestValue = n.children.values.maxOf { it?.bestValue ?: Double.NEGATIVE_INFINITY }
+            }
         }
     } // backUp
 
@@ -336,8 +346,8 @@ class BasicTreeNode(
         for (action in children.keys) {
             if (children[action] != null) {
                 val node = children[action]
-                var childValue = node!!.nVisits.toDouble()
-
+                //var childValue = node!!.nVisits.toDouble()
+                var childValue = node!!.bestValue
                 // Apply small noise to break ties randomly
                 childValue = noise(childValue, search.parameters.epsilon, search.rnd.nextDouble())
 
