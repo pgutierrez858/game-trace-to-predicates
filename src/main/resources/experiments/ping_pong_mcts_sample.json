@@ -1,17 +1,17 @@
 {
   "class": "predcompiler.compilation.mcts.BasicMCTSSearch",
   "data": {
-    "grammarPath": "src/main/resources/grammars/grammar2.bnf",
+    "grammarPath": "src/main/resources/grammars/ifThenGrammar.bnf",
     "tracesPath": "src/main/resources/samples/ping-pong",
     "evaluator": {
       "class": "predcompiler.compilation.evaluation.evaluators.ParameterizedPredicateEvaluator",
       "data": {
-        "upperLengthBound": 40,
-        "lowerLengthBound": 20,
-        "predicateLengthWeight": 0,
-        "exampleTraceWasteWeight": 20,
-        "exampleTraceCorrectnessWeight": 0,
-        "counterExamplesRejectedWeight": 0
+        "upperLengthBound": 45,
+        "lowerLengthBound": 5,
+        "predicateLengthWeight": 5,
+        "exampleTraceWasteWeight": 35,
+        "exampleTraceCorrectnessWeight": 40,
+        "counterExamplesRejectedWeight": 20
       }
     },
     "mappings": [

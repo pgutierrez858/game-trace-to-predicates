@@ -18,11 +18,13 @@ class BasicMCTSSearch(
     val rnd: Random = Random()
     val parameters: BasicMCTSParams
     var state: GrammarProductionState
+    private var currentMCTSTree: BasicTreeNode
 
     init {
         val heuristic = fun(state: GrammarProductionState): Double {
-            if (state.isNotTerminal()) return 0.0
-            val stringPredicate: String = state.buildResultString()
+            val stringPredicate: String = state.buildResultString(ignoreNonTerminals = true)
+            // To ignore intermediate heuristic: if (state.isNotTerminal()) return 0.0
+            if (stringPredicate.isEmpty() || stringPredicate.contains("()") || stringPredicate.contains(")(")) return 0.0
             return evaluator.evaluatePredicate(
                 stringPredicate, exampleTraces,
                 counterExampleTraces
@@ -30,20 +32,18 @@ class BasicMCTSSearch(
         }
         parameters = BasicMCTSParams(
             K = sqrt(2.0),
-            rolloutLength = 100,
-            maxTreeDepth = 200,
+            rolloutLength = 20,
+            maxTreeDepth = 20,
             epsilon = 1e-6,
             budgetType = MCTSSearchConstants.BUDGET_ITERATIONS,
-            budget = 700,
+            budget = 1000,
             heuristic = heuristic
         )
         state = GrammarProductionState(grammar, listOf(grammar[0].symbol))
+        currentMCTSTree = BasicTreeNode(this, null, state, rnd)
     }
 
     private fun getAction(state: GrammarProductionState): GrammarProductionAction {
-        // Search for best action from the root
-        val currentMCTSTree = BasicTreeNode(this, null, state, rnd)
-
         // mctsSearch does all of the hard work
         currentMCTSTree.mctsSearch()
 
@@ -55,12 +55,19 @@ class BasicMCTSSearch(
         while (state.isNotTerminal()) {
             val action = getAction(state)
             val newState = state.applyProduction(action)
-            println(newState.buildResultString())
+            println(newState.buildResultString(ignoreNonTerminals = false))
+
+            currentMCTSTree.pruneActionsDifferentFrom(action)
+            currentMCTSTree = currentMCTSTree.getChildFromAction(action)!!
             if (newState == state) break
             state = newState
         }
-        bestSolutions.add(state.buildResultString())
-        bestFitness = evaluator.evaluatePredicate(state.buildResultString(), exampleTraces, counterExampleTraces)
+        bestSolutions.add(state.buildResultString(ignoreNonTerminals = true))
+        bestFitness = evaluator.evaluatePredicate(
+            state.buildResultString(ignoreNonTerminals = true),
+            exampleTraces,
+            counterExampleTraces
+        )
         terminated = true
     } // stepSearch
 

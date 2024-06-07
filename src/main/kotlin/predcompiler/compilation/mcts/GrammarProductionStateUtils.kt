@@ -68,6 +68,7 @@ fun GrammarProductionState.isNotTerminal(): Boolean {
 /**
  * Produces a String representation of the result by joining the token values of all symbols in the result sequence.
  */
-fun GrammarProductionState.buildResultString(): String {
-    return resultSequence.joinToString(" ") { symbol -> symbol.value }
+fun GrammarProductionState.buildResultString(ignoreNonTerminals: Boolean): String {
+    if (ignoreNonTerminals) return resultSequence.filter { it.isTerminal }.joinToString("") { it.value }
+    return resultSequence.joinToString("") { symbol -> symbol.value }
 } // GrammarProductionState.buildResultString

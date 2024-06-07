@@ -32,6 +32,12 @@ class BasicTreeNode(
     // Number of FM calls and State copies up until this node
     private var fmCallsCount = 0
 
+    /**
+     * Determines whether this tree node has been completely explored (as in: all children have been completely explored
+     * in depth). Terminal nodes are completely explored by default.
+     */
+    private var fullyExplored = false
+
     init {
         this.root = parent?.root ?: this
         updateState(state)
@@ -68,11 +74,14 @@ class BasicTreeNode(
             val elapsedTimerIteration = ElapsedCpuTimer()
 
             // Selection + expansion: navigate tree until a node not fully expanded is found, add a new node to the tree
-            val selected = treePolicy()
+            // if no additional node is available for exploration, then we can safely break the search
+            val selected = treePolicy() ?: break
+
             // Monte carlo rollout: return value of MC rollout from the newly added node
-            val delta = selected.rollOut()
+            val rolloutEndNode = selected.rollOut()
+
             // Back up the value of the rollout through the tree
-            selected.backUp(delta)
+            rolloutEndNode.backUp()
             // Finished iteration
             numIters++
 
@@ -86,14 +95,17 @@ class BasicTreeNode(
                     remaining = elapsedTimer.remainingTimeMillis()
                     stop = remaining <= 2 * avgTimeTaken || remaining <= remainingLimit!!
                 }
+
                 MCTSSearchConstants.BUDGET_ITERATIONS -> {
                     // Iteration budget
                     stop = numIters >= params.budget
                 }
+
                 MCTSSearchConstants.BUDGET_FM_CALLS -> {
                     // FM calls budget
                     stop = fmCallsCount > params.budget
                 }
+
                 else -> {
                     // TODO
                 }
@@ -105,21 +117,33 @@ class BasicTreeNode(
      * Selection + expansion steps. - Tree is traversed until a node not fully expanded is found. - A new child of this
      * node is added to the tree.
      *
-     * @return - new node added to the tree.
+     * @return - new node added to the tree, or null if the tree has already been fully explored and there is nothing
+     * left to expand.
      */
-    private fun treePolicy(): BasicTreeNode {
+    private fun treePolicy(): BasicTreeNode? {
+        // nothing left to explore in this tree, we can finish the search
+        if (this.fullyExplored) return null
         var cur: BasicTreeNode = this
 
-        // Keep iterating while the state reached is not terminal and the depth of the tree is not exceeded
+        /**
+         * Keep iterating while the following conditions hold:
+         * 1) the state reached is not terminal
+         * 2) the depth of the tree is not exceeded
+         * 3) the node reached has not been fully expanded
+         */
         while (cur.state.isNotTerminal() && cur.depth < search.parameters.maxTreeDepth) {
+            // still some actions to expand, select a random one to produce the next node
             if (cur.unexpandedActions().isNotEmpty()) {
                 // We have an unexpanded action
                 cur = cur.expand()
                 return cur
             } else {
-                // Move to next child given by UCT function
-                val actionChosen = cur.ucb()
-                cur = cur.children[actionChosen]!!
+                // if there are no more actions that would allow for exploration, search is over.
+                if (cur.unexploredActions().isNotEmpty()) {
+                    // Move to next child given by UCT function
+                    val actionChosen = cur.ucb()
+                    cur = cur.children[actionChosen]!!
+                } else return null
             }
         }
         return cur
@@ -140,6 +164,15 @@ class BasicTreeNode(
     }
 
     /**
+     * @return A list of actions that lead to nodes that have not yet been fully explored (or that haven't been explored
+     * at all).
+     */
+    private fun unexploredActions(): List<GrammarProductionAction> {
+        return children.keys.stream().filter { if (children[it] != null) !children[it]!!.fullyExplored else true }
+            .collect(Collectors.toList())
+    } // unexploredActions
+
+    /**
      * Expands the node by creating a new random child node and adding to the tree.
      *
      * @return - new child node.
@@ -153,8 +186,7 @@ class BasicTreeNode(
 
         // copy the current state and advance it using the chosen action
         // we first copy the action so that the one stored in the node will not have any state changes
-        val nextState = state.copy()
-        advance(nextState, chosen)
+        val nextState = advance(state.copy(), chosen)
 
         // then instantiate a new node
         val tn = BasicTreeNode(search, this, nextState, rnd)
@@ -173,13 +205,20 @@ class BasicTreeNode(
         return gs.applyProduction(act)
     } // advance
 
+    fun pruneActionsDifferentFrom(action: GrammarProductionAction){
+        children.entries.removeIf { it.key !== action }
+    } // pruneActionsDifferentFrom
+
     private fun ucb(): GrammarProductionAction {
         // Find child with highest UCB value, maximising for ourselves and minimizing for opponent
         var bestAction: GrammarProductionAction? = null
         var bestValue = -Double.MAX_VALUE
         val params = search.parameters
 
-        for (action in children.keys) {
+        // Only bother with actions that have not been fully explored yet if ignoreFullyExplored is set to true
+        val availableActions =
+            children.filter { it.value == null || !it.value!!.fullyExplored }.keys
+        for (action in availableActions) {
             val child = children[action]
             if (child == null) throw AssertionError("Should not be here")
             else if (bestAction == null) bestAction = action
@@ -214,28 +253,37 @@ class BasicTreeNode(
         return bestAction
     } // ucb
 
+    fun getChildFromAction(action: GrammarProductionAction): BasicTreeNode? {
+        return children[action]
+    }  // getChildrenFromAction
+
     /**
-     * Perform a Monte Carlo rollout from this node.
-     *
-     * @return - value of rollout.
+     * Perform a Monte Carlo rollout from this node, creating all visited intermediate nodes in the process.
+     * @return - Last node reached during the rollout phase.
      */
-    private fun rollOut(): Double {
+    private fun rollOut(): BasicTreeNode {
         var rolloutDepth = 0 // counting from end of tree
+        var cur = this
 
         // If rollouts are enabled, select actions for the rollout in line with the rollout policy
-        var rolloutState = state.copy()
+        var rolloutState = state
         if (search.parameters.rolloutLength > 0) {
             while (!finishRollout(rolloutState, rolloutDepth)) {
                 val next: GrammarProductionAction = rolloutState.possibleActions().random(rnd.asKotlinRandom())
                 rolloutState = advance(rolloutState, next)
                 rolloutDepth++
+
+                // ensure that states visited during rollout are added to the search tree if they were not already there
+                var rolloutStateNode = cur.children[next]
+                if (rolloutStateNode == null) {
+                    rolloutStateNode = BasicTreeNode(search, cur, rolloutState, rnd)
+                    cur.children[next] = rolloutStateNode
+                }
+                cur = rolloutStateNode
             }
         }
-        // Evaluate final state and return normalised score
-        val value: Double = search.parameters.heuristic.invoke(rolloutState)
-        if (java.lang.Double.isNaN(value)) throw AssertionError("Illegal heuristic value - should be a number")
-        return value
-    }
+        return cur
+    } // rollout
 
     /**
      * Checks if rollout is finished. Rollouts end on maximum length, or if game ended.
@@ -252,16 +300,27 @@ class BasicTreeNode(
     }
 
     /**
-     * Back up the value of the child through all parents. Increase number of visits and total value.
-     *
-     * @param result - value of rollout to back up
+     * Back up the value of the child through all parents. Increase number of visits and total value. Update fully
+     * explored status of node and parent node chain.
      */
-    private fun backUp(result: Double) {
+    private fun backUp() {
         var n: BasicTreeNode? = this
+
+        // Evaluate value of this state and return normalised score
+        val value: Double = search.parameters.heuristic.invoke(state)
+        if (java.lang.Double.isNaN(value)) throw AssertionError("Illegal heuristic value - should be a number")
+
+        // if our state is terminal, we can assume it is fully explored
+        if (!state.isNotTerminal()) {
+            fullyExplored = true
+        }
         while (n != null) {
             n.nVisits++
-            n.totValue += result
+            n.totValue += value
             n = n.parent
+            // propagate fully explored status
+            if (n != null)
+                n.fullyExplored = n.unexploredActions().isEmpty()
         }
     } // backUp
 

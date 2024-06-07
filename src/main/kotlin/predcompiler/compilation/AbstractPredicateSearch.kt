@@ -176,6 +176,40 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
         grammar.add(terminalRule)
     } // populateLiteralProductions
 
+    private fun populateBlockLiteralProductions() {
+        // add a rule to the grammar for the atomic predicates
+        // as grammar literals. This is done by looking at the atomic predicates
+        // from the headers of the csv files used as reference.
+        val terminalRule = Rule(Symbol("literal", false))
+        // <literal> ::= <maybe-a> & <maybe-b> & ... & <maybe-z>
+        val terminalProduction = Production()
+        for ((i, l) in atomicPredicates.withIndex()) {
+            val ruleSymbol = "maybe-${l}"
+            val atomicPredicateRule = Rule(Symbol(ruleSymbol, false))
+            // <maybe-t> ::= t | !t | T (T means we don't care as it will be appended to an & clause)
+            // t
+            val lHoldsProduction = Production()
+            lHoldsProduction.add(Symbol(l, true))
+            atomicPredicateRule.add(lHoldsProduction)
+            // !t
+            val lDoesNotHoldProduction = Production()
+            lDoesNotHoldProduction.add(Symbol("!", true))
+            lDoesNotHoldProduction.add(Symbol(l, true))
+            atomicPredicateRule.add(lDoesNotHoldProduction)
+            // T
+            val lDoesNotMatterProduction = Production()
+            lDoesNotMatterProduction.add(Symbol("1", true))
+            atomicPredicateRule.add(lDoesNotMatterProduction)
+
+            if (i > 0) terminalProduction.add(Symbol("&", true))
+            terminalProduction.add(Symbol(ruleSymbol, false))
+
+            grammar.add(atomicPredicateRule)
+        }
+        terminalRule.add(terminalProduction)
+        grammar.add(terminalRule)
+    } // populateBlockLiteralProductions
+
     /**
      * Initialize the Predicate Search with the information from the system paths where samples and grammars are
      * located. If no mappings have been provided, it is assumed that the target files are purely robustness based and
@@ -197,7 +231,7 @@ abstract class AbstractPredicateSearch @Throws(IOException::class) constructor /
         exampleTraces = readTracesData.exampleTraces
         counterExampleTraces = readTracesData.counterExampleTraces
 
-        populateLiteralProductions()
+        populateBlockLiteralProductions()
 
         // init run information fields for current search
         this.bestFitness = Float.NEGATIVE_INFINITY
