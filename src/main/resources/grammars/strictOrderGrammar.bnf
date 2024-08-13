@@ -1,0 +1,2 @@
+<seq> ::= F( <m-literal> & X( <seq> )) | F( <m-literal> )
+<m-literal> ::=  <literal> | !( <literal> )

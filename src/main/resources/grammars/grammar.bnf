@@ -1,2 +1,0 @@
-<goal> ::= <literal> | ! ( <literal> ) | !( <goal> ) "|" ( <goal> ) | G(F( <goal> )) | F( <goal> ) | G(!( <goal> )) | ( <goal> ) <binary> ( <goal> ) | F(( <goal> ) & X(F( <goal> )))
-<binary> ::= "&" | "|" | "U"

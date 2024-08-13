@@ -15,7 +15,7 @@ data class EvaluationReport(
      * the execution ends in an acceptance state or, if no acceptance states are
      * available, if it ends in a non-trap state.
      */
-    val endProgress: Float = 0f,
+    val endProgress: Double = 0.0,
 
     /**
      * Accumulated reward during the execution of the trace against the predicate.
@@ -29,5 +29,5 @@ data class EvaluationReport(
      * training frameworks to ensure a proper final reward is granted for early
      * successful completion of the task at hand).
      */
-    val endReward: Float = 0f
+    val endReward: Double = 0.0
 ) // EvaluationReport

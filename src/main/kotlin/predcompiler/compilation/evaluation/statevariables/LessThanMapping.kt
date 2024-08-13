@@ -8,20 +8,20 @@ class LessThanMapping(
     /**
      * Value that target variable will be compared to.
      */
-    private val c: Float,
+    private val c: Double,
     /**
      * Lower bound value for the comparison. Any target variable value under this
      * threshold will be mapped to a robustness of +1.
      */
-    private val lowerBound: Float,
+    private val lowerBound: Double,
     /**
      * Upper bound value for the comparison. Any target variable value beyond this
      * threshold will be mapped to a robustness of -1.
      */
-    private val upperBound: Float
+    private val upperBound: Double
 ) : AbstractStateToRobustnessMapping() {
-    override fun mapRobustness(state: HashMap<String, Float>): Float {
-        val value = state[targetVariable] ?: return -1f
+    override fun mapRobustness(state: HashMap<String, Double>): Double {
+        val value = state[targetVariable] ?: return -1.0
         return if (value > c) {
             (value - c) / (c - upperBound)
         } else {

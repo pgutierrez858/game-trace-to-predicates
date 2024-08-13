@@ -1,0 +1,13 @@
+{
+  "class": "predcompiler.compilation.experiments.ExperimentConfig",
+  "data": {
+    "grammarPath": "src/main/resources/grammars/testGrammar.bnf",
+    "exampleTracesPath": "src/main/resources/samples/stealth/examples",
+    "counterExampleTracesPath": "src/main/resources/samples/stealth/counter-examples",
+    "evaluator": {
+      "class": "predcompiler.compilation.evaluation.evaluators.predicate.ClusterPredicateEvaluator",
+      "data": {}
+    },
+    "mappings": []
+  }
+}

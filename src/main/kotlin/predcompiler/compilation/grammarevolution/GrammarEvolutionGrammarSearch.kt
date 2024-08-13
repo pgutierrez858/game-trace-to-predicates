@@ -2,18 +2,20 @@ package predcompiler.compilation.grammarevolution
 
 import org.moeaframework.algorithm.single.GeneticAlgorithm
 import org.moeaframework.core.PRNG
+import org.moeaframework.util.grammar.ContextFreeGrammar
 import predcompiler.compilation.AbstractPredicateSearch
-import predcompiler.compilation.evaluation.evaluators.IPredicateEvaluator
-import predcompiler.compilation.evaluation.evaluators.TieredPredicateEvaluator
-import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping
-import predcompiler.compilation.evaluation.statevariables.LessThanMapping
-import java.io.File
+import predcompiler.compilation.evaluation.RealValuation
+import predcompiler.compilation.evaluation.evaluators.predicate.IPredicateEvaluator
 
 class GrammarEvolutionGrammarSearch(
-    grammarPath: String, tracesPath: String, evaluator: IPredicateEvaluator,
-    mappings: List<AbstractStateToRobustnessMapping>, initialPopulationSize: Int, maxGenerations: Int
+    grammar: ContextFreeGrammar,
+    evaluator: IPredicateEvaluator,
+    exampleTraces: List<List<RealValuation>>,
+    counterExampleTraces: List<List<RealValuation>>,
+    initialPopulationSize: Int,
+    maxGenerations: Int
 ) : AbstractPredicateSearch(
-    grammarPath, tracesPath, evaluator, mappings
+    grammar, evaluator, exampleTraces, counterExampleTraces
 ) {
     // region private search fields
     /**
@@ -43,7 +45,7 @@ class GrammarEvolutionGrammarSearch(
         this.maxGenerations = maxGenerations
 
         // setup and construct the GP solver
-        problem = GrammarRegression(exampleTraces, counterExampleTraces, grammar, TieredPredicateEvaluator())
+        problem = GrammarRegression(exampleTraces, counterExampleTraces, grammar, evaluator)
         algorithm = GeneticAlgorithm(problem)
         algorithm.initialPopulationSize = initialPopulationSize
         generation = 0
@@ -59,7 +61,7 @@ class GrammarEvolutionGrammarSearch(
         }
         // record the fitness of the members from the solution set
         // (note that there will always be at least one)
-        bestFitness = algorithm.result[0].getObjective(0).toFloat()
+        bestFitness = algorithm.result[0].getObjective(0)
 
         generation++
 
@@ -68,99 +70,5 @@ class GrammarEvolutionGrammarSearch(
         }
     } // stepSearch
 
-    companion object {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            // Check if help command is requested or if the number of arguments is incorrect
-
-            if (args.size != 4 || args[0].equals("-help", ignoreCase = true) || args[0].equals(
-                    "--help",
-                    ignoreCase = true
-                )
-            ) {
-                printUsage()
-                return
-            }
-
-            try {
-                // Parse args[0] as the path to the .bnf file
-                val bnfFilePath = args[0]
-                // Validate if the path points to a .bnf file
-                if (!bnfFilePath.endsWith(".bnf")) {
-                    System.err.println("Error: The first argument must be a path to a .bnf file.")
-                    printUsage()
-                    return
-                }
-
-                // Parse args[1] as the path to the system folder
-                val systemFolderPath = args[1]
-                // Validate if the path is a directory
-                val folder = File(systemFolderPath)
-                if (!folder.isDirectory) {
-                    System.err.println("Error: The second argument must be a path to a directory.")
-                    printUsage()
-                    return
-                }
-
-                // Parse args[2] as the initialPopulationSize parameter
-                val initialPopulationSize: Int
-                try {
-                    initialPopulationSize = args[2].toInt()
-                } catch (e: NumberFormatException) {
-                    System.err.println(
-                        "Error: The third argument must be an integer representing the initial Population Size."
-                    )
-                    printUsage()
-                    return
-                }
-
-                // Parse args[3] as the maxGenerations parameter
-                val maxGenerations: Int
-                try {
-                    maxGenerations = args[3].toInt()
-                } catch (e: NumberFormatException) {
-                    System.err.println("Error: The third argument must be an integer representing the max Generations.")
-                    printUsage()
-                    return
-                }
-
-                // sample mappings setting for testing
-                val mappings: MutableList<AbstractStateToRobustnessMapping> = ArrayList()
-                val resourceChecks = floatArrayOf(1f, 2f, 3f, 4f, 5f)
-                val resourceNames = arrayOf("wood", "iron", "axe")
-                for (name in resourceNames) {
-                    for (check in resourceChecks) {
-                        mappings.add(LessThanMapping(name, check, 0f, 5f))
-                    }
-                }
-                val search = GrammarEvolutionGrammarSearch(
-                    bnfFilePath, systemFolderPath,
-                    TieredPredicateEvaluator(), mappings,
-                    initialPopulationSize, maxGenerations
-                )
-
-
-                while (search.isStillRunning) {
-                    search.step()
-                    search.printStepResults()
-                }
-            } catch (e: Exception) {
-                System.err.println("Error: An unexpected error occurred while parsing arguments.")
-                e.printStackTrace()
-                printUsage()
-            }
-        } // main
-
-        private fun printUsage() {
-            println(
-                "Usage: java GrammarEvolutionGrammarSearch <bnfFilePath> <systemFolderPath> <initialPopulationSize> <maxGenerations>"
-            )
-            println("  <bnfFilePath>           : Absolute path to the .bnf file.")
-            println("  <systemFolderPath>      : Absolute path to the system folder containing traces.")
-            println("  <initialPopulationSize> : Number of individuals to be included in the population.")
-            println("  <maxGenerations>        : Maximum number of population evolutions.")
-            println("  -help, --help           : Display this help message.")
-        } // printUsage
-    }
 } // GrammarEvolutionGrammarSearch
 

@@ -1,0 +1,2 @@
+<expr> ::=  G( <m-literal> ) | ( <expr> ) & ( <expr> ) | 1
+<m-literal> ::=  <literal> | !( <literal> )

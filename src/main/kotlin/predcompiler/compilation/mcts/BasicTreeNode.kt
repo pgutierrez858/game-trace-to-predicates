@@ -54,6 +54,10 @@ class BasicTreeNode(
         }
     }
 
+    fun getBestValue(): Double {
+        return bestValue
+    }
+
     /**
      * Performs full MCTS search, using the defined budget limits.
      */
@@ -155,11 +159,25 @@ class BasicTreeNode(
         return cur
     } // treePolicy
 
+    fun bestLeafState(): GrammarProductionState? {
+        var cur: BasicTreeNode? = this
+
+        while (cur != null && cur.state.isNotTerminal()) {
+            // Move to next child given by value
+            val actionChosen = cur.bestAction()
+            cur = cur.children[actionChosen]
+        }
+        if (cur != null) {
+            return cur.state
+        }
+        return null
+    } // bestLeafState
+
     private fun updateState(newState: GrammarProductionState) {
         if (newState.isNotTerminal()) for (action in newState.possibleActions()) {
             children[action] = null // mark a new node to be expanded
         }
-    } // setState
+    } // updateState
 
     /**
      * @return A list of the unexpanded Actions from this State

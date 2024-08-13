@@ -1,0 +1,1 @@
+<expr> ::=  G( !( <literal> ) "|" X( F( <literal> )) ) | ( <expr> ) & ( <expr> )

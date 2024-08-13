@@ -1,0 +1,3 @@
+<expr> ::= SSEQ[<literal-sequence>]
+<literal-sequence> ::= <m-literal> | <m-literal>,<literal-sequence>
+<m-literal> ::= <literal> | !( <literal> )

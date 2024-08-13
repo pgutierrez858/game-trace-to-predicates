@@ -1,22 +1,22 @@
 package predcompiler.compilation.bruteforce
 
+import org.moeaframework.util.grammar.ContextFreeGrammar
 import predcompiler.compilation.AbstractPredicateSearch
-import predcompiler.compilation.evaluation.evaluators.IPredicateEvaluator
-import predcompiler.compilation.evaluation.evaluators.TieredPredicateEvaluator
-import predcompiler.compilation.evaluation.statevariables.AbstractStateToRobustnessMapping
-import predcompiler.compilation.evaluation.statevariables.LessThanMapping
-import java.io.File
+import predcompiler.compilation.evaluation.RealValuation
+import predcompiler.compilation.evaluation.evaluators.predicate.IPredicateEvaluator
 import java.util.*
 
 class BruteForceGrammarSearch(
-    grammarPath: String, tracesPath: String, evaluator: IPredicateEvaluator,
-    mappings: List<AbstractStateToRobustnessMapping>,
+    grammar: ContextFreeGrammar,
+    evaluator: IPredicateEvaluator,
+    exampleTraces: List<List<RealValuation>>,
+    counterExampleTraces: List<List<RealValuation>>,
     /**
      * Maximum number of productions that this search will look into from the root
      * node of the grammar tree.
      */
     private val maxDepth: Int
-) : AbstractPredicateSearch(grammarPath, tracesPath, evaluator, mappings) {
+) : AbstractPredicateSearch(grammar, evaluator, exampleTraces, counterExampleTraces) {
     private val terminals: List<String>
 
     private var processedTerminals: Int
@@ -30,7 +30,7 @@ class BruteForceGrammarSearch(
         if (processedTerminals >= terminals.size) return
 
         val opt = terminals[processedTerminals]
-        val fitness = evaluator.evaluatePredicate(opt, exampleTraces, counterExampleTraces)
+        val fitness = evaluator.evaluatePredicate(opt, exampleTraces, counterExampleTraces).values.average()
         if (fitness > bestFitness) {
             bestFitness = fitness
             bestSolutions = HashSet()
@@ -95,85 +95,5 @@ class BruteForceGrammarSearch(
         return rootTree.terminals
     } // buildGrammarTree
 
-    companion object {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            // Check if help command is requested or if the number of arguments is incorrect
-
-            if (args.size != 3 || args[0].equals("-help", ignoreCase = true) || args[0].equals(
-                    "--help",
-                    ignoreCase = true
-                )
-            ) {
-                printUsage()
-                return
-            }
-
-            try {
-                // Parse args[0] as the path to the .bnf file
-                val bnfFilePath = args[0]
-                // Validate if the path points to a .bnf file
-                if (!bnfFilePath.endsWith(".bnf")) {
-                    System.err.println("Error: The first argument must be a path to a .bnf file.")
-                    printUsage()
-                    return
-                }
-
-                // Parse args[1] as the path to the system folder
-                val systemFolderPath = args[1]
-                // Validate if the path is a directory
-                val folder = File(systemFolderPath)
-                if (!folder.isDirectory) {
-                    System.err.println("Error: The second argument must be a path to a directory.")
-                    printUsage()
-                    return
-                }
-
-                // Parse args[2] as the maximum depth parameter
-                val maxDepth: Int
-                try {
-                    maxDepth = args[2].toInt()
-                } catch (e: NumberFormatException) {
-                    System.err.println("Error: The third argument must be an integer representing the maximum depth.")
-                    printUsage()
-                    return
-                }
-
-                // sample mappings setting for testing
-                val mappings: MutableList<AbstractStateToRobustnessMapping> = ArrayList()
-                val resourceChecks = floatArrayOf(1f, 2f, 3f, 4f, 5f)
-                val resourceNames = arrayOf("wood", "iron", "axe")
-                for (name in resourceNames) {
-                    for (check in resourceChecks) {
-                        mappings.add(LessThanMapping(name, check, 0f, 5f))
-                    }
-                }
-                val search = BruteForceGrammarSearch(
-                    bnfFilePath,
-                    systemFolderPath,
-                    TieredPredicateEvaluator(),
-                    mappings,
-                    maxDepth
-                )
-
-                while (search.isStillRunning) {
-                    search.step()
-                    search.printStepResults()
-                }
-            } catch (e: Exception) {
-                System.err.println("Error: An unexpected error occurred while parsing arguments.")
-                e.printStackTrace()
-                printUsage()
-            }
-        } // main
-
-        private fun printUsage() {
-            println("Usage: java BruteForceGrammarSearch <bnfFilePath> <systemFolderPath> <maxDepth>")
-            println("  <bnfFilePath>        : Absolute path to the .bnf file.")
-            println("  <systemFolderPath>   : Absolute path to the system folder containing traces.")
-            println("  <maxDepth>           : Maximum depth parameter of the search algorithm.")
-            println("  -help, --help        : Display this help message.")
-        } // printUsage
-    }
 } // BruteForceGrammarSearch
 

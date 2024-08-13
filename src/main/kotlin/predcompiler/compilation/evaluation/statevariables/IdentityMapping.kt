@@ -6,8 +6,8 @@ class IdentityMapping(
      */
     private val targetVariable: String,
 ) : AbstractStateToRobustnessMapping() {
-    override fun mapRobustness(state: HashMap<String, Float>): Float {
-        return state[targetVariable] ?: return -1f
+    override fun mapRobustness(state: HashMap<String, Double>): Double {
+        return state[targetVariable] ?: return -1.0
     }
 
     override val predicateRepresentation: String

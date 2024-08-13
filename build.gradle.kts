@@ -28,6 +28,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.0")
+    implementation("com.github.haifengl:smile-kotlin:3.1.1")
 }
 
 tasks.test {

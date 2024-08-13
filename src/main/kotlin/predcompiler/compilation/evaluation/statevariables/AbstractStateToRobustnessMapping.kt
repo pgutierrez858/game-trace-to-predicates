@@ -12,11 +12,11 @@ abstract class AbstractStateToRobustnessMapping {
      * Produces a floating value in the [-1, 1] interval representing the current
      * robustness of this predicate over the game state.
      */
-    abstract fun mapRobustness(state: HashMap<String, Float>): Float
+    abstract fun mapRobustness(state: HashMap<String, Double>): Double
 
     /**
      * Represents this function over state as a predicate-safe String, i.e. a string
      * that starts with a letter and only contains alphanumeric characters.
      */
 	abstract val predicateRepresentation: String
-}
+} // AbstractStateToRobustnessMapping

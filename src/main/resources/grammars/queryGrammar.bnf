@@ -1,0 +1,63 @@
+<correlation> ::= !F( <m-literal> ) "|" F( <m-literal> )
+
+<any-correlation> ::= <correlation>
+                    | ( <correlation> ) "|" ( <any-correlation> )
+
+<all-correlation> ::= <correlation>
+                    | ( <correlation> ) & ( <all-correlation> )
+
+
+<invariance> ::= G( <m-literal> )
+
+<any-invariance> ::= <invariance>
+                   | ( <invariance> ) "|" ( <any-invariance> )
+
+<all-invariance> ::= <invariance>
+                   | ( <invariance> ) & ( <all-invariance> )
+
+
+<response> ::= !( <m-literal> ) "|" F( <m-literal> )
+
+<any-response> ::= <response>
+                 | ( <response> ) "|" ( <any-response> )
+
+<all-response> ::= <response>
+                 | ( <response> ) & ( <all-response> )
+
+
+<precedence> ::= !( <m-literal> ) "|" (( <m-literal> ) U ( <m-literal> ))
+
+<any-precedence> ::= <precedence>
+                   | ( <precedence> ) "|" ( <any-precedence> )
+
+<all-precedence> ::= <precedence>
+                   | ( <precedence> ) & ( <all-precedence> )
+
+
+<progress> ::= G( F( <m-literal> ))
+
+<any-progress> ::= <progress>
+                 | ( <progress> ) "|" ( <any-progress> )
+
+<all-progress> ::= <progress>
+                 | ( <progress> ) & ( <all-progress> )
+
+
+<stability> ::= F( G( <m-literal> ))
+
+<any-stability> ::= <stability>
+                  | ( <stability> ) "|" ( <any-stability> )
+
+<all-stability> ::= <stability>
+                  | ( <stability> ) & ( <all-stability> )
+
+
+<m-literal> ::= <literal>
+              | !( <literal> )
+
+<any-m-literal> ::= <m-literal>
+                  | ( <m-literal> ) "|" ( <any-m-literal> )
+
+<all-m-literal> ::= <m-literal>
+                  | ( <m-literal> ) & ( <all-m-literal> )
+

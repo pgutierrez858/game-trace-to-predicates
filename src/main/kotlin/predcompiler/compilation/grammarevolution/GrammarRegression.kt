@@ -4,7 +4,7 @@ import org.moeaframework.core.Solution
 import org.moeaframework.core.variable.Grammar
 import org.moeaframework.problem.AbstractProblem
 import org.moeaframework.util.grammar.ContextFreeGrammar
-import predcompiler.compilation.evaluation.evaluators.IPredicateEvaluator
+import predcompiler.compilation.evaluation.evaluators.predicate.IPredicateEvaluator
 import predcompiler.compilation.evaluation.RealValuation
 import kotlin.random.Random
 
@@ -23,11 +23,11 @@ class GrammarRegression
     /**
      * Demonstrations of good behavior (positive examples)
      */
-    private val examples: List<Array<RealValuation>>,
+    private val examples: List<List<RealValuation>>,
     /**
      * Demonstrations of bad behavior to avoid (negative examples)
      */
-    private val counterExamples: List<Array<RealValuation>>,
+    private val counterExamples: List<List<RealValuation>>,
     /**
      * The grammar.
      */
@@ -61,8 +61,8 @@ class GrammarRegression
             // the codon did not produce a valid grammar; penalize the solution
             solution.setObjective(0, Double.POSITIVE_INFINITY)
         } else {
-            val fitness = evaluator.evaluatePredicate(predicate, examples, counterExamples)
-            solution.setObjective(0, -fitness.toDouble())
+            val fitness = evaluator.evaluatePredicate(predicate, examples, counterExamples).values.average()
+            solution.setObjective(0, -fitness)
         }
     } // evaluate
 

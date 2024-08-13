@@ -11,5 +11,6 @@ data class BasicMCTSParams(
     val breakMS: Int? = 0,
     val seed: Long? = 0,
     val budgetType: MCTSSearchConstants? = null,
-    val budget: Long = 0
+    val budget: Long = 0,
+    val maxTotalTime: Int = 60000
 )
