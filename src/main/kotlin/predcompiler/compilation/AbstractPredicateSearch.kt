@@ -3,6 +3,9 @@ package predcompiler.compilation
 import org.moeaframework.util.grammar.*
 import predcompiler.compilation.evaluation.evaluators.predicate.IPredicateEvaluator
 import predcompiler.compilation.evaluation.RealValuation
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Base class for any search for a predicate that models a set of sample and counter-example traces while maximizing
@@ -74,18 +77,16 @@ abstract class AbstractPredicateSearch
          */
         get() = !this.terminated // isTerminated
 
-    fun printStepResults() {
-        println("-------------------------------")
-        println("Step $steps")
-        println("-------------------------------")
-
-        println("Best Fitness Value: $bestFitness")
-
-        for (pred in bestSolutions) {
-            println("    $pred")
+    fun debugStepResults() {
+        logger.info {
+            "-------------------------------\n" +
+            "Step $steps\n" +
+            "-------------------------------\n" +
+            "Best Fitness Value: $bestFitness\n" +
+            "-------------------------------" +
+            bestSolutions.joinToString { "    $it\n" } +
+            "-------------------------------"
         }
-        println("-------------------------------")
-        println()
     } // printStepResults
 
     protected abstract fun stepSearch()

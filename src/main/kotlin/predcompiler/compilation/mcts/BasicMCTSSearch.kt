@@ -1,11 +1,14 @@
 package predcompiler.compilation.mcts
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.moeaframework.util.grammar.ContextFreeGrammar
 import predcompiler.compilation.AbstractPredicateSearch
 import predcompiler.compilation.evaluation.RealValuation
 import predcompiler.compilation.evaluation.evaluators.predicate.IPredicateEvaluator
 import java.util.*
 import kotlin.math.sqrt
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Basic MCTS-based searcher using [TAG's BasicMCTSPlayer implementation](https://github.com/GAIGResearch/TabletopGames/blob/master/src/main/java/players/basicMCTS/BasicMCTSPlayer.java) as a reference.
@@ -52,7 +55,7 @@ class BasicMCTSSearch(
     private fun getAction(): GrammarProductionAction {
         val elapsedTimer = ElapsedCpuTimer()
 
-        // mctsSearch does all of the hard work
+        // mctsSearch does all the hard work
         currentMCTSTree.mctsSearch()
 
         // Update total time
@@ -66,13 +69,14 @@ class BasicMCTSSearch(
         while (state.isNotTerminal() && totalTime < parameters.maxTotalTime) {
             val action = getAction()
             val newState = state.applyProduction(action)
-            println("Used ${(totalTime / parameters.maxTotalTime * 100)}% of the total time.")
-            println("[Current MCTS Tree Root Node State]")
-            println("   ${newState.buildResultString(ignoreNonTerminals = false)}")
-            println("[Best Leaf State]")
-            println("   ${currentMCTSTree.bestLeafState()?.buildResultString(ignoreNonTerminals = false)}")
-            println("[Value]: ${currentMCTSTree.getBestValue()}")
-            println(".....................................................")
+            logger.info { "Used ${(totalTime / parameters.maxTotalTime * 100)}% of the total time." }
+            logger.info {
+                "Current MCTS Tree Root Node State: ${newState.buildResultString(ignoreNonTerminals = false)}"
+            }
+            logger.info {
+                "Best Leaf State: ${currentMCTSTree.bestLeafState()?.buildResultString(ignoreNonTerminals = false)}"
+            }
+            logger.info { "Value: ${currentMCTSTree.getBestValue()}" }
 
             currentMCTSTree.pruneActionsDifferentFrom(action)
             currentMCTSTree = currentMCTSTree.getChildFromAction(action)!!

@@ -29,6 +29,15 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.0")
     implementation("com.github.haifengl:smile-kotlin:3.1.1")
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api-kotlin
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.0")
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
+    // implementation("org.apache.logging.log4j:log4j-core:2.23.1")
+    // implementation("org.apache.logging.log4j:log4j-api:2.23.1")
+    // implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.23.1")
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation("org.slf4j:slf4j-api:2.0.16")
+    implementation("org.slf4j:slf4j-simple:2.0.16")
 }
 
 tasks.test {

@@ -11,9 +11,10 @@ val json = Json { ignoreUnknownKeys = true }
 fun <T> loadClassFromJSON(jsonObject: JsonObject): T {
 
     val className = jsonObject["class"]?.jsonPrimitive?.content
-        ?: throw IllegalArgumentException("Missing 'class' field in JSON")
+    requireNotNull(className) { "Missing 'class' field in JSON" }
+
     val data = jsonObject["data"]?.jsonObject
-        ?: throw IllegalArgumentException("Missing 'data' field in JSON")
+    requireNotNull(data) { "Missing 'data' field in JSON" }
 
     val kClass = Class.forName(className).kotlin
     val constructor = kClass.primaryConstructor!!

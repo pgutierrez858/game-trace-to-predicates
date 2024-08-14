@@ -207,7 +207,7 @@ object RewardGenerator {
                         ((1.0 + min(0.0, bestImprovingRobustness)) / maxDistance)
 
                     // update end progress with current progress
-                    endProgress = min(1.0, (baseProgress + subtaskProgress).toDouble())
+                    endProgress = min(1.0, (baseProgress + subtaskProgress))
 
                     // update endReward with best improving robustness
                     endReward += bestImprovingRobustness

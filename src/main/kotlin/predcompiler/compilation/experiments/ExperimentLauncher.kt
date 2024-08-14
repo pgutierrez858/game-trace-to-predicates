@@ -9,6 +9,8 @@ import predcompiler.compilation.io.readGrammar
 import predcompiler.compilation.io.readTraces
 import predcompiler.compilation.mcts.BasicMCTSSearch
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 data class ExperimentConfig(
     val grammarPath: String,
@@ -19,76 +21,83 @@ data class ExperimentConfig(
 ) // ExperimentConfig
 
 fun main(args: Array<String>) {
+
+    val logger = KotlinLogging.logger("ExperimentLauncher")
+
+    // Assumptions on Input size and file extension.
     // Check if help command is requested or if the number of arguments is incorrect
-    if (args.size != 1) {
-        printUsage()
-        return
+    require(args.size == 1) {
+        errorAndUsageMessage("Incorrect number of arguments")
     }
 
-    try {
-        // Parse args[0] as the path to the .json config file
-        val configFile = args[0]
-        // Validate if the path points to a .bnf file
-        if (!configFile.endsWith(".json")) {
-            System.err.println("Error: The first argument must be a path to a .json file.")
-            printUsage()
-            return
+    // Parse args[0] as the path to the .json config file
+    val configFile = args[0]
+    // Validate if the path points to a .bnf file
+    require (configFile.endsWith(".json")) {
+        errorAndUsageMessage("The first argument must be a path to a .json file")
+    }
+
+    logger.info { "Reading configuration from $configFile" }
+    check(Path(configFile).exists()) {
+        errorAndUsageMessage("File $configFile does not exist")
+    }
+
+    val config = loadClassFromFile<ExperimentConfig>(configFile)
+    logger.info { "Configuration loaded: $config" }
+
+    logger.info { "Reading grammar from ${config.grammarPath}" }
+    val grammar = readGrammar(config.grammarPath)
+
+    logger.info { "Reading example traces from ${config.exampleTracesPath}" }
+    val exampleTraceData = readTraces(Path(config.exampleTracesPath), config.mappings)
+
+    logger.info { "Reading counterexample traces from ${config.counterExampleTracesPath}" }
+    val counterExampleTraceData = readTraces(Path(config.counterExampleTracesPath), config.mappings)
+    if(counterExampleTraceData.traces.isNotEmpty()) {
+        check(exampleTraceData.atomicPredicates == counterExampleTraceData.atomicPredicates) {
+            "Mismatch between atomic predicates in example:\n" +
+                    "(${exampleTraceData.atomicPredicates})\n" +
+                    "and counterexample traces:\n" +
+                    "[${counterExampleTraceData.atomicPredicates}]"
+        }
+    }
+
+    populateBlockLiteralProductions(grammar, exampleTraceData.atomicPredicates)
+
+    // Splitting loop
+    val evaluator = AutomatonTraceEvaluator()
+    val examples = exampleTraceData.traces.toMutableList()
+    val counters = counterExampleTraceData.traces.toMutableList()
+
+    for (i in 0 until 4){
+        val search = BasicMCTSSearch(
+            grammar,
+            config.evaluator,
+            examples,
+            counters
+        )
+
+        while (search.isStillRunning) {
+            search.step()
+            search.debugStepResults()
         }
 
-        val config = loadClassFromFile<ExperimentConfig>(configFile)
+        val sol = search.getBestSolutions().first()
+        println("Splitting by predicate [${sol}]")
 
-        val grammar = readGrammar(config.grammarPath)
-        val exampleTraceData = readTraces(Path(config.exampleTracesPath), config.mappings)
-        val counterExampleTraceData = readTraces(Path(config.counterExampleTracesPath), config.mappings)
-        if(counterExampleTraceData.traces.isNotEmpty()) {
-            check(exampleTraceData.atomicPredicates == counterExampleTraceData.atomicPredicates) {
-                "Mismatch between atomic predicates in example:\n" +
-                        "(${exampleTraceData.atomicPredicates})\n" +
-                        "and counterexample traces:\n" +
-                        "[${counterExampleTraceData.atomicPredicates}]"
-            }
+        // transfer elements that satisfy the predicate from the examples list to the counters list
+        val modelledPredicates = examples.filter {
+            evaluator.evaluateTrace(sol, it)["progress"]!! >= 1.0
         }
-
-        populateBlockLiteralProductions(grammar, exampleTraceData.atomicPredicates)
-
-        // Splitting loop
-        val evaluator = AutomatonTraceEvaluator()
-        val examples = exampleTraceData.traces.toMutableList()
-        val counters = counterExampleTraceData.traces.toMutableList()
-
-        for (i in 0 until 4){
-            val search = BasicMCTSSearch(
-                grammar,
-                config.evaluator,
-                examples,
-                counters
-            )
-
-            while (search.isStillRunning) {
-                search.step()
-                search.printStepResults()
-            }
-
-            val sol = search.getBestSolutions().first()
-            println("Splitting by predicate [${sol}]")
-
-            // transfer elements that satisfy the predicate from the examples list to the counters list
-            val modelledPredicates = examples.filter {
-                evaluator.evaluateTrace(sol, it)["progress"]!! >= 1.0
-            }
-            counters.addAll(modelledPredicates)
-            examples.removeAll(modelledPredicates)
-        }
-
-    } catch (e: Exception) {
-        System.err.println("Error: An unexpected error occurred while parsing arguments.")
-        e.printStackTrace()
-        printUsage()
+        counters.addAll(modelledPredicates)
+        examples.removeAll(modelledPredicates)
     }
 } // main
 
-private fun printUsage() {
-    println("Usage: java ExperimentLauncher <jsonFilePath>")
-    println("  <jsonFilePath>          : Absolute path to the .json file with the experiment's configuration.")
-    println("  -help, --help           : Display this help message.")
+private const val usage = "Usage: java ExperimentLauncher <jsonFilePath>\n" +
+        "   <jsonFilePath>          : Absolute path to the .json file with the experiment's configuration.\n" +
+        "  -help, --help           : Display this help message."
+
+private fun errorAndUsageMessage(errorMsg: String?) {
+    if (errorMsg != null) "Error: $errorMsg\n$usage" else usage
 } // printUsage
