@@ -26,7 +26,7 @@ class BruteForceGrammarSearch(
         processedTerminals = 0
     } // BruteForceGrammarSearch
 
-    public override fun stepSearch() {
+    public override fun tickSearch() {
         if (processedTerminals >= terminals.size) return
 
         val opt = terminals[processedTerminals]

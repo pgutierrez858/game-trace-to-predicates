@@ -65,40 +65,46 @@ class BasicMCTSSearch(
         return currentMCTSTree.bestAction()
     } // getAction
 
-    public override fun stepSearch() {
-        while (state.isNotTerminal() && totalTime < parameters.maxTotalTime) {
+    private fun debugMctsTickResults() {
+        logger.info {
+            """
+            MCTS tick results:
+            -> Current MCTS Tree Root Node State: ${state.buildResultString(ignoreNonTerminals = false)}
+            -> Best Leaf State: ${currentMCTSTree.bestLeafState()?.buildResultString(ignoreNonTerminals = false)}
+            -> Value: ${currentMCTSTree.getBestValue()}
+            """.trimIndent()
+        }
+    } // debugMctsTickResults
+
+    public override fun tickSearch() {
+        if (terminated) {
+            logger.warn { "Search is already terminated. Ticking it again will have no effect." }
+            return
+        }
+
+        if (state.isNotTerminal()) {
             val action = getAction()
             val newState = state.applyProduction(action)
-            logger.info { "Used ${(totalTime / parameters.maxTotalTime * 100)}% of the total time." }
-            logger.info {
-                "Current MCTS Tree Root Node State: ${newState.buildResultString(ignoreNonTerminals = false)}"
-            }
-            logger.info {
-                "Best Leaf State: ${currentMCTSTree.bestLeafState()?.buildResultString(ignoreNonTerminals = false)}"
-            }
-            logger.info { "Value: ${currentMCTSTree.getBestValue()}" }
+            debugMctsTickResults()
 
             currentMCTSTree.pruneActionsDifferentFrom(action)
             currentMCTSTree = currentMCTSTree.getChildFromAction(action)!!
-            if (newState == state) break
             state = newState
         }
-        val bestState = currentMCTSTree.bestLeafState()
-        if (bestState != null) {
+        else terminated = true
+
+        val bestState = currentMCTSTree.bestLeafState() ?: return
+        val bestFitnessReport = evaluator.evaluatePredicate(
+            bestState.buildResultString(ignoreNonTerminals = true),
+            exampleTraces,
+            counterExampleTraces
+        )
+        val currentFitness = bestFitnessReport.values.average()
+        if (currentFitness >= bestFitness) {
+            bestSolutions.clear()
             bestSolutions.add(bestState.buildResultString(ignoreNonTerminals = true))
-            val bestFitnessReport = evaluator.evaluatePredicate(
-                bestState.buildResultString(ignoreNonTerminals = true),
-                exampleTraces,
-                counterExampleTraces
-            )
-            bestFitness = bestFitnessReport.values.average()
-            println("-------------------------------")
-            bestFitnessReport.forEach { (key, value) -> println("[$key]: $value") }
+            bestFitness = currentFitness
         }
-        else {
-            println("No best state found.")
-        }
-        terminated = true
     } // stepSearch
 
 } // BasicMCTSSearch

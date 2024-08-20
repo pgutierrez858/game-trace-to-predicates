@@ -51,7 +51,7 @@ class GrammarEvolutionGrammarSearch(
         generation = 0
     } // GrammarEvolutionGrammarSearch
 
-    override fun stepSearch() {
+    override fun tickSearch() {
         if (generation >= maxGenerations) return
 
         algorithm.step()

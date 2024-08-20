@@ -52,6 +52,11 @@ abstract class AbstractPredicateSearch
      */
     private var steps: Int = 0
 
+    /**
+     * How many ticks have been performed within the current search step.
+     */
+    private var stepTicks: Int = 0
+
     // endregion
 
     init {
@@ -60,10 +65,12 @@ abstract class AbstractPredicateSearch
         this.bestSolutions = HashSet()
         this.terminated = false
         this.steps = 0
+        this.stepTicks = 0
     } // init
 
-    fun step() {
-        stepSearch()
+    fun tick() {
+        if (terminated) return
+        tickSearch()
         steps++
     } // step
 
@@ -77,18 +84,22 @@ abstract class AbstractPredicateSearch
          */
         get() = !this.terminated // isTerminated
 
-    fun debugStepResults() {
+    fun debugTickResults() {
         logger.info {
-            "-------------------------------\n" +
-            "Step $steps\n" +
-            "-------------------------------\n" +
-            "Best Fitness Value: $bestFitness\n" +
-            "-------------------------------" +
-            bestSolutions.joinToString { "    $it\n" } +
-            "-------------------------------"
+            """
+            Search Progress:
+            -> Step: $steps
+            -> Tick: $stepTicks
+            -> Best Fitness: $bestFitness
+            -> Best Individuals:
+            ${bestSolutions.joinToString("\n", "\t-> ")}
+            """.trimIndent()
         }
-    } // printStepResults
+    } // debugTickResults
 
-    protected abstract fun stepSearch()
+    /**
+     * Perform a single tick within the current search process.
+     */
+    protected abstract fun tickSearch()
 } // AbstractPredicateSearch
 

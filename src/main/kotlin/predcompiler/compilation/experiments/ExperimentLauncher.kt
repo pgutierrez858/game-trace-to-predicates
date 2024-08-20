@@ -62,6 +62,9 @@ fun main(args: Array<String>) {
         }
     }
 
+    // Populate the grammar with literals inferred from the traces
+    // Grammar files are generally specified without literal rules to keep them generic,
+    // so we need to add them here with our domain information in mind.
     populateBlockLiteralProductions(grammar, exampleTraceData.atomicPredicates)
 
     // Splitting loop
@@ -78,12 +81,12 @@ fun main(args: Array<String>) {
         )
 
         while (search.isStillRunning) {
-            search.step()
-            search.debugStepResults()
+            search.tick()
+            search.debugTickResults()
         }
 
         val sol = search.getBestSolutions().first()
-        println("Splitting by predicate [${sol}]")
+        logger.info { "Splitting by predicate [${sol}]" }
 
         // transfer elements that satisfy the predicate from the examples list to the counters list
         val modelledPredicates = examples.filter {
