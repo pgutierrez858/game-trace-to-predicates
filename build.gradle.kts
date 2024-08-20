@@ -38,6 +38,8 @@ dependencies {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     implementation("org.slf4j:slf4j-api:2.0.16")
     implementation("org.slf4j:slf4j-simple:2.0.16")
+    implementation("org.jetbrains.kotlinx:dataframe:0.13.1")
+    implementation("org.jetbrains.kotlinx:kandy-lets-plot:0.7.0")
 }
 
 tasks.test {
