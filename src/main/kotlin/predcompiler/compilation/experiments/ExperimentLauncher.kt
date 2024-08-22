@@ -11,6 +11,7 @@ import predcompiler.compilation.mcts.BasicMCTSSearch
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jetbrains.kotlinx.dataframe.api.*
 
 data class ExperimentConfig(
     val grammarPath: String,
@@ -72,7 +73,8 @@ fun main(args: Array<String>) {
     val examples = exampleTraceData.traces.toMutableList()
     val counters = counterExampleTraceData.traces.toMutableList()
 
-    for (i in 0 until 4){
+    var i = 0
+    do {
         val search = BasicMCTSSearch(
             grammar,
             config.evaluator,
@@ -86,15 +88,45 @@ fun main(args: Array<String>) {
         }
 
         val sol = search.getBestSolutions().first()
-        logger.info { "Splitting by predicate [${sol}]" }
+        logger.info { "Splitting by predicate [${sol}]:" }
+
+        // dataframe containing the all previously rejected traces (by other predicate splits)
+        val countersDataframe = generateDataframe(sol, counters, listOf(AutomatonTraceEvaluator()))
 
         // transfer elements that satisfy the predicate from the examples list to the counters list
-        val modelledPredicates = examples.filter {
+        val modelledTraces = examples.filter {
             evaluator.evaluateTrace(sol, it)["progress"]!! >= 1.0
         }
-        counters.addAll(modelledPredicates)
-        examples.removeAll(modelledPredicates)
-    }
+        logger.info { "-> ${modelledTraces.size} traces modelled by predicate." }
+
+        // dataframe containing the traces modelled by the chosen predicate
+        val modelledDataframe = generateDataframe(sol, modelledTraces, listOf(AutomatonTraceEvaluator()))
+
+        // transfer all of these traces to the new counters list from the examples list
+        counters.addAll(modelledTraces)
+        examples.removeAll(modelledTraces)
+
+        // dataframe containing the remaining traces that haven't been modelled yet
+        val pendingDataframe = generateDataframe(sol, examples, listOf(AutomatonTraceEvaluator()))
+        logger.info { "-> ${examples.size} traces pending." }
+
+        logger.info { "Generating plot for induced clusters." }
+        val jointDataframe = modelledDataframe.concat(pendingDataframe).concat(countersDataframe)
+        val category by columnOf(*Array(jointDataframe.rowsCount()) {
+            when {
+                it < modelledDataframe.rowsCount() -> 0
+                it < modelledDataframe.rowsCount() + pendingDataframe.rowsCount() -> 1
+                else -> 2
+            }
+        })
+
+        plotSamples(
+            jointDataframe,
+            category,
+            "($i) $sol",
+        )
+        i++
+    } while (search.bestFitness >= 0.51)
 } // main
 
 private const val usage = "Usage: java ExperimentLauncher <jsonFilePath>\n" +

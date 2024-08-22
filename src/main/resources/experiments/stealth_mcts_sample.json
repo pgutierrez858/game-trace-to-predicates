@@ -1,7 +1,7 @@
 {
   "class": "predcompiler.compilation.experiments.ExperimentConfig",
   "data": {
-    "grammarPath": "src/main/resources/grammars/generalGrammar.bnf",
+    "grammarPath": "src/main/resources/grammars/testGrammar.bnf",
     "exampleTracesPath": "src/main/resources/samples/stealth/examples",
     "counterExampleTracesPath": "src/main/resources/samples/stealth/counter-examples",
     "evaluator": {

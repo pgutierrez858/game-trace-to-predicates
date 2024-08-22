@@ -40,7 +40,8 @@ abstract class AbstractPredicateSearch
     /**
      * Fitness value of all the individuals included in bestSolutions.
      */
-    protected var bestFitness: Double = 0.0
+    var bestFitness: Double = 0.0
+        protected set
 
     /**
      * Whether search has terminated.
